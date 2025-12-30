@@ -1,0 +1,25 @@
+# Headless service for StatefulSet DNS
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "learning-ui.fullname" . }}-shell
+  labels:
+    {{- include "learning-ui.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    {{- if .Values.editor.enabled }}
+    - port: 8443
+      targetPort: 8443
+      protocol: TCP
+      name: editor
+    {{- else }}
+    # Dummy port for headless service when editor is disabled
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: headless
+    {{- end }}
+  selector:
+    {{- include "learning-ui.shell.selectorLabels" . | nindent 4 }}

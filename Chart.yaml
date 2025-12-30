@@ -1,0 +1,16 @@
+apiVersion: v2
+name: learning-ui
+description: Interactive learning environment with step-by-step instructions and web terminal
+type: application
+version: 1.0.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.19.0-0"
+keywords:
+  - learning
+  - tutorial
+  - terminal
+  - interactive
+  - killerkoda
+home: https://github.com/aymusic/dploy
+maintainers:
+  - name: aydev

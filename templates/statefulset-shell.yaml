@@ -1,0 +1,215 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "learning-ui.fullname" . }}-shell
+  labels:
+    {{- include "learning-ui.labels" . | nindent 4 }}
+    {{- include "learning-ui.shell.selectorLabels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "learning-ui.fullname" . }}-shell
+  replicas: 1
+  podManagementPolicy: Parallel
+  {{- if .Values.persistence.enabled }}
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Delete
+    whenScaled: Retain
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "learning-ui.shell.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "learning-ui.shell.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "learning-ui.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      hostname: {{ include "learning-ui.fullname" . }}-shell
+      {{- if and .Values.editor.enabled .Values.k3s.enabled }}
+      initContainers:
+        - name: install-kubectl
+          image: curlimages/curl:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              ARCH=$(uname -m)
+              case $ARCH in
+                x86_64) ARCH="amd64" ;;
+                aarch64) ARCH="arm64" ;;
+              esac
+              VERSION=$(curl -sL https://dl.k8s.io/release/stable.txt)
+              curl -sLo /tools/kubectl "https://dl.k8s.io/release/${VERSION}/bin/linux/${ARCH}/kubectl"
+              chmod +x /tools/kubectl
+          volumeMounts:
+            - name: kubectl-bin
+              mountPath: /tools
+      {{- end }}
+      containers:
+        - name: shell
+          image: "{{ .Values.shell.image.repository }}:{{ .Values.shell.image.tag }}"
+          imagePullPolicy: {{ .Values.shell.image.pullPolicy }}
+          {{- if .Values.k3s.enabled }}
+          # When k3s is enabled, use wrapper to copy kubeconfig with proper permissions
+          command:
+            - /bin/bash
+            - -c
+            - |
+              mkdir -p ~/.kube
+              while [ ! -f /etc/rancher/k3s/k3s.yaml ]; do sleep 1; done
+              cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+              chmod 600 ~/.kube/config
+              exec sleep infinity
+          {{- else }}
+          {{- with .Values.shell.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.shell.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- end }}
+          env:
+            - name: USERNAME
+              value: {{ .Values.username | quote }}
+            - name: UUID
+              value: {{ .Values.uuid | quote }}
+          workingDir: {{ .Values.persistence.mountPath }}
+          {{- with .Values.shell.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.shell.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- if .Values.persistence.enabled }}
+            - name: workspace
+              mountPath: {{ .Values.persistence.mountPath }}
+            {{- end }}
+            {{- if .Values.k3s.enabled }}
+            - name: k3s-config
+              mountPath: /etc/rancher/k3s
+              readOnly: true
+            {{- end }}
+            {{- with .Values.shell.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+        {{- if .Values.editor.enabled }}
+        - name: editor
+          image: "{{ .Values.editor.image.repository }}:{{ .Values.editor.image.tag }}"
+          imagePullPolicy: {{ .Values.editor.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              mkdir -p ~/.local/share/code-server/User
+              cat > ~/.local/share/code-server/User/settings.json << 'EOF'
+              {
+                "workbench.colorTheme": "Solarized Dark"
+              }
+              EOF
+              exec /usr/bin/entrypoint.sh --auth {{ if .Values.editor.password }}password{{ else }}none{{ end }} --bind-addr 0.0.0.0:8443 --disable-telemetry --disable-update-check /workspace
+          env:
+            {{- if .Values.editor.password }}
+            - name: PASSWORD
+              value: {{ .Values.editor.password | quote }}
+            {{- end }}
+            - name: CS_DISABLE_GETTING_STARTED_OVERRIDE
+              value: "1"
+            {{- if .Values.k3s.enabled }}
+            - name: PATH
+              value: "/usr/local/bin:/usr/bin:/bin:/tools"
+            - name: KUBECONFIG
+              value: "/etc/rancher/k3s/k3s.yaml"
+            {{- end }}
+          ports:
+            - name: editor
+              containerPort: 8443
+              protocol: TCP
+          {{- with .Values.editor.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- if .Values.persistence.enabled }}
+            - name: workspace
+              mountPath: /workspace
+            {{- end }}
+            {{- if .Values.k3s.enabled }}
+            - name: kubectl-bin
+              mountPath: /tools
+              readOnly: true
+            - name: k3s-config
+              mountPath: /etc/rancher/k3s
+              readOnly: true
+            {{- end }}
+        {{- end }}
+        {{- if .Values.k3s.enabled }}
+        - name: k3s
+          image: "{{ .Values.k3s.image.repository }}:{{ .Values.k3s.image.tag }}"
+          imagePullPolicy: {{ .Values.k3s.image.pullPolicy }}
+          command:
+            - /bin/k3s
+          args:
+            - server
+            - --disable=traefik
+            - --disable=servicelb
+            - --disable=metrics-server
+            - --disable=local-storage
+            - --write-kubeconfig-mode=644
+          env:
+            - name: K3S_KUBECONFIG_MODE
+              value: "644"
+          securityContext:
+            privileged: true
+          {{- with .Values.k3s.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: k3s-data
+              mountPath: /var/lib/rancher/k3s
+            - name: k3s-config
+              mountPath: /etc/rancher/k3s
+        {{- end }}
+        {{- with .Values.sidecars }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      volumes:
+        {{- if .Values.k3s.enabled }}
+        - name: k3s-data
+          emptyDir: {}
+        - name: k3s-config
+          emptyDir: {}
+        {{- end }}
+        {{- if and .Values.editor.enabled .Values.k3s.enabled }}
+        - name: kubectl-bin
+          emptyDir: {}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+  {{- if .Values.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: workspace
+      spec:
+        accessModes:
+          {{- toYaml .Values.persistence.accessModes | nindent 10 }}
+        {{- if .Values.persistence.storageClass }}
+        storageClassName: {{ .Values.persistence.storageClass | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size | quote }}
+  {{- end }}

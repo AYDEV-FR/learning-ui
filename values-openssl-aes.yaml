@@ -1,0 +1,563 @@
+# Learning UI Chart Values - OpenSSL AES Cryptography
+# Introduction to symmetric encryption with OpenSSL and AES
+
+# Values injected by dploy API
+username: ""
+uuid: ""
+ingressHost: ""
+
+# Scenario configuration
+scenario:
+  name: "OpenSSL & AES"
+  description: "Introduction to symmetric cryptography with OpenSSL and AES"
+  difficulty: beginner
+  estimatedTime: 30m
+  steps:
+    - name: "01-introduction"
+      title: "Introduction"
+      content: |
+        # Introduction to Cryptography with OpenSSL
+
+        Welcome to this hands-on tutorial on symmetric encryption using OpenSSL and AES.
+
+        ## What is AES?
+
+        **AES (Advanced Encryption Standard)** is a symmetric encryption algorithm adopted by the U.S. government and widely used worldwide. It encrypts data in fixed-size blocks of 128 bits.
+
+        Key sizes available:
+        - **AES-128**: 128-bit key
+        - **AES-192**: 192-bit key
+        - **AES-256**: 256-bit key (recommended)
+
+        ## What You'll Learn
+
+        1. Generate cryptographic keys and IVs
+        2. Encrypt files with AES-256-CBC
+        3. Decrypt files
+        4. Understand encryption modes (CBC, GCM)
+        5. Best practices for key management
+
+        Let's verify OpenSSL is installed:
+
+        ```bash
+        openssl version
+        ```
+
+        List available ciphers:
+
+        ```bash
+        openssl enc -list | grep -i aes
+        ```
+
+    - name: "02-key-generation"
+      title: "Key Generation"
+      content: |
+        # Generating Keys and IVs
+
+        ## Create a Working Directory
+
+        ```bash
+        mkdir -p /workspace/crypto && cd /workspace/crypto
+        ```
+
+        ## Random Key Generation
+
+        Generate a 256-bit (32 bytes) random key in hexadecimal:
+
+        ```bash
+        openssl rand -hex 32 > secret.key
+        cat secret.key
+        ```
+
+        ## Generate an Initialization Vector (IV)
+
+        The IV adds randomness to encryption. For AES, the IV must be 128 bits (16 bytes):
+
+        ```bash
+        openssl rand -hex 16 > iv.txt
+        cat iv.txt
+        ```
+
+        ## Why is IV Important?
+
+        The IV ensures that encrypting the same plaintext twice produces different ciphertexts.
+        **Important**: Never reuse the same key+IV combination!
+
+        ## Key from Password (PBKDF2)
+
+        Derive a key from a password using PBKDF2:
+
+        ```bash
+        openssl kdf -keylen 32 -kdfopt digest:SHA256 \
+          -kdfopt pass:MySecretPassword \
+          -kdfopt salt:$(openssl rand -hex 16) \
+          -kdfopt iter:100000 PBKDF2 | xxd -p
+        ```
+
+      check: |
+        #!/bin/bash
+        cd /workspace/crypto 2>/dev/null || exit 1
+        if [ -f "secret.key" ] && [ -f "iv.txt" ]; then
+            KEY_LEN=$(cat secret.key | tr -d '\n' | wc -c)
+            IV_LEN=$(cat iv.txt | tr -d '\n' | wc -c)
+            if [ "$KEY_LEN" -eq 64 ] && [ "$IV_LEN" -eq 32 ]; then
+                echo "Key (256-bit) and IV (128-bit) generated correctly!"
+                exit 0
+            fi
+        fi
+        echo "Generate the key with: openssl rand -hex 32 > secret.key"
+        echo "Generate the IV with: openssl rand -hex 16 > iv.txt"
+        exit 1
+
+    - name: "03-encrypt-file"
+      title: "File Encryption"
+      content: |
+        # Encrypting Files with AES-256-CBC
+
+        ## Create a Test File
+
+        ```bash
+        cd /workspace/crypto
+        echo "This is my secret message that needs protection!" > message.txt
+        cat message.txt
+        ```
+
+        ## Encrypt with AES-256-CBC
+
+        Using the key and IV we generated:
+
+        ```bash
+        openssl enc -aes-256-cbc \
+          -in message.txt \
+          -out message.enc \
+          -K $(cat secret.key) \
+          -iv $(cat iv.txt)
+        ```
+
+        ## Verify the Encrypted File
+
+        The encrypted file is binary. View it in hex:
+
+        ```bash
+        xxd message.enc
+        ```
+
+        Or in base64:
+
+        ```bash
+        base64 message.enc
+        ```
+
+        ## Understanding the Parameters
+
+        - `-aes-256-cbc`: AES with 256-bit key in CBC mode
+        - `-in`: Input file (plaintext)
+        - `-out`: Output file (ciphertext)
+        - `-K`: Encryption key in hexadecimal
+        - `-iv`: Initialization Vector in hexadecimal
+
+      check: |
+        #!/bin/bash
+        cd /workspace/crypto 2>/dev/null || exit 1
+        if [ -f "message.txt" ] && [ -f "message.enc" ]; then
+            if [ -s "message.enc" ]; then
+                echo "File encrypted successfully!"
+                exit 0
+            fi
+        fi
+        echo "Create message.txt and encrypt it to message.enc"
+        exit 1
+
+    - name: "04-decrypt-file"
+      title: "File Decryption"
+      content: |
+        # Decrypting Files
+
+        ## Decrypt the Message
+
+        Use the same key and IV to decrypt:
+
+        ```bash
+        cd /workspace/crypto
+        openssl enc -aes-256-cbc -d \
+          -in message.enc \
+          -out message_decrypted.txt \
+          -K $(cat secret.key) \
+          -iv $(cat iv.txt)
+        ```
+
+        ## Verify Decryption
+
+        ```bash
+        cat message_decrypted.txt
+        ```
+
+        ## Compare Original and Decrypted
+
+        ```bash
+        diff message.txt message_decrypted.txt && echo "Files are identical!"
+        ```
+
+        ## What Happens with Wrong Key?
+
+        Try decrypting with a different key:
+
+        ```bash
+        WRONG_KEY=$(openssl rand -hex 32)
+        openssl enc -aes-256-cbc -d \
+          -in message.enc \
+          -out wrong_decrypt.txt \
+          -K $WRONG_KEY \
+          -iv $(cat iv.txt) 2>&1 || echo "Decryption failed or produced garbage!"
+        ```
+
+      check: |
+        #!/bin/bash
+        cd /workspace/crypto 2>/dev/null || exit 1
+        if [ -f "message_decrypted.txt" ]; then
+            if diff -q message.txt message_decrypted.txt > /dev/null 2>&1; then
+                echo "Decryption successful! Files match!"
+                exit 0
+            fi
+        fi
+        echo "Decrypt the file to message_decrypted.txt"
+        exit 1
+
+    - name: "05-password-encryption"
+      title: "Password-Based Encryption"
+      content: |
+        # Password-Based Encryption
+
+        Instead of managing keys manually, you can use a password. OpenSSL derives the key using PBKDF2.
+
+        ## Encrypt with Password
+
+        ```bash
+        cd /workspace/crypto
+        echo "Secret data protected by password" > password_test.txt
+
+        openssl enc -aes-256-cbc -salt -pbkdf2 -iter 100000 \
+          -in password_test.txt \
+          -out password_test.enc \
+          -pass pass:MyStrongPassword123
+        ```
+
+        ## Decrypt with Password
+
+        ```bash
+        openssl enc -aes-256-cbc -d -pbkdf2 -iter 100000 \
+          -in password_test.enc \
+          -out password_test_dec.txt \
+          -pass pass:MyStrongPassword123
+
+        cat password_test_dec.txt
+        ```
+
+        ## Parameters Explained
+
+        - `-salt`: Adds random salt (prevents rainbow table attacks)
+        - `-pbkdf2`: Uses PBKDF2 key derivation (recommended)
+        - `-iter 100000`: 100,000 iterations (slows brute-force)
+        - `-pass pass:PASSWORD`: Password source
+
+        ## Alternative Password Sources
+
+        ```bash
+        # From environment variable
+        export MYPASS="secret"
+        openssl enc -aes-256-cbc -d -pbkdf2 -in file.enc -pass env:MYPASS
+
+        # From file
+        echo "mypassword" > passfile.txt
+        openssl enc -aes-256-cbc -d -pbkdf2 -in file.enc -pass file:passfile.txt
+        ```
+
+      check: |
+        #!/bin/bash
+        cd /workspace/crypto 2>/dev/null || exit 1
+        if [ -f "password_test.enc" ] && [ -f "password_test_dec.txt" ]; then
+            if grep -q "Secret data" password_test_dec.txt 2>/dev/null; then
+                echo "Password-based encryption working!"
+                exit 0
+            fi
+        fi
+        echo "Complete the password-based encryption exercise"
+        exit 1
+
+    - name: "06-aes-gcm"
+      title: "AES-GCM Mode"
+      content: |
+        # AES-GCM: Authenticated Encryption
+
+        **GCM (Galois/Counter Mode)** provides both encryption AND authentication (integrity check).
+
+        ## Why GCM over CBC?
+
+        - **CBC**: Encrypts data but doesn't detect tampering
+        - **GCM**: Encrypts AND authenticates (detects modifications)
+
+        ## Encrypt with AES-256-GCM
+
+        ```bash
+        cd /workspace/crypto
+        echo "Data requiring integrity protection" > gcm_test.txt
+
+        # Generate key for GCM
+        openssl rand -hex 32 > gcm.key
+
+        # GCM uses a 96-bit (12 byte) nonce
+        openssl rand -hex 12 > gcm_nonce.txt
+
+        # Encrypt with GCM
+        openssl enc -aes-256-gcm \
+          -in gcm_test.txt \
+          -out gcm_test.enc \
+          -K $(cat gcm.key) \
+          -iv $(cat gcm_nonce.txt)
+        ```
+
+        ## Decrypt with AES-256-GCM
+
+        ```bash
+        openssl enc -aes-256-gcm -d \
+          -in gcm_test.enc \
+          -out gcm_test_dec.txt \
+          -K $(cat gcm.key) \
+          -iv $(cat gcm_nonce.txt)
+
+        cat gcm_test_dec.txt
+        ```
+
+        ## GCM Best Practices
+
+        1. **Never reuse nonce with same key** - catastrophic security failure
+        2. Use random 96-bit nonces
+        3. Prefer GCM for new applications
+        4. GCM has built-in authentication tag
+
+      check: |
+        #!/bin/bash
+        cd /workspace/crypto 2>/dev/null || exit 1
+        if [ -f "gcm_test.enc" ] && [ -f "gcm.key" ]; then
+            echo "AES-GCM encryption completed!"
+            exit 0
+        fi
+        echo "Complete the AES-GCM encryption exercise"
+        exit 1
+
+    - name: "07-base64-encoding"
+      title: "Base64 Encoding"
+      content: |
+        # Base64 Encoding for Transport
+
+        Encrypted data is binary. Base64 encoding makes it safe for text protocols (email, JSON, etc.).
+
+        ## Encrypt and Encode in One Step
+
+        ```bash
+        cd /workspace/crypto
+        echo "Message for email transmission" > email_msg.txt
+
+        openssl enc -aes-256-cbc -pbkdf2 -a \
+          -in email_msg.txt \
+          -out email_msg.b64 \
+          -pass pass:EmailPassword123
+
+        cat email_msg.b64
+        ```
+
+        The `-a` flag outputs Base64 instead of binary.
+
+        ## Decode and Decrypt
+
+        ```bash
+        openssl enc -aes-256-cbc -pbkdf2 -a -d \
+          -in email_msg.b64 \
+          -out email_msg_dec.txt \
+          -pass pass:EmailPassword123
+
+        cat email_msg_dec.txt
+        ```
+
+        ## Manual Base64 Operations
+
+        ```bash
+        # Encode
+        echo "Hello World" | openssl base64
+
+        # Decode
+        echo "SGVsbG8gV29ybGQK" | openssl base64 -d
+        ```
+
+      check: |
+        #!/bin/bash
+        cd /workspace/crypto 2>/dev/null || exit 1
+        if [ -f "email_msg.b64" ]; then
+            if grep -qE '^[A-Za-z0-9+/=]+$' email_msg.b64; then
+                echo "Base64 encoded ciphertext created!"
+                exit 0
+            fi
+        fi
+        echo "Create base64-encoded encrypted file: email_msg.b64"
+        exit 1
+
+    - name: "08-summary"
+      title: "Summary & Best Practices"
+      content: |
+        # Summary & Best Practices
+
+        ## What You've Learned
+
+        1. **Key Generation**: `openssl rand -hex 32`
+        2. **AES-256-CBC Encryption**: Strong but needs separate integrity check
+        3. **AES-256-GCM**: Authenticated encryption (recommended)
+        4. **Password-based**: PBKDF2 with high iterations
+        5. **Base64**: Safe transport over text protocols
+
+        ## Security Best Practices
+
+        ### Key Management
+        - Use 256-bit keys for AES
+        - Store keys securely (HSM, vault, encrypted storage)
+        - Rotate keys periodically
+        - Never hardcode keys in source code
+
+        ### IV/Nonce Rules
+        - **Never reuse** IV/nonce with same key
+        - Use cryptographically random values
+        - CBC: 128-bit IV, GCM: 96-bit nonce
+
+        ### Algorithm Choice
+        - **Prefer AES-GCM** for new applications
+        - Use PBKDF2 with 100,000+ iterations for passwords
+        - Avoid deprecated modes (ECB, DES, 3DES)
+
+        ## Quick Reference
+
+        ```bash
+        # Generate 256-bit key
+        openssl rand -hex 32
+
+        # Encrypt (password)
+        openssl enc -aes-256-cbc -salt -pbkdf2 -iter 100000 \
+          -in plain.txt -out cipher.enc -pass pass:PASSWORD
+
+        # Decrypt (password)
+        openssl enc -aes-256-cbc -d -pbkdf2 -iter 100000 \
+          -in cipher.enc -out plain.txt -pass pass:PASSWORD
+        ```
+
+        ## Congratulations!
+
+        You've completed the OpenSSL & AES cryptography tutorial!
+
+        Clean up your workspace:
+
+        ```bash
+        cd /workspace && ls crypto/
+        ```
+
+      check: |
+        #!/bin/bash
+        cd /workspace/crypto 2>/dev/null || exit 1
+        COUNT=$(ls -1 *.enc 2>/dev/null | wc -l)
+        if [ "$COUNT" -ge 3 ]; then
+            echo "Congratulations! Tutorial completed successfully!"
+            echo "You've created $COUNT encrypted files and learned AES encryption!"
+            exit 0
+        fi
+        echo "Complete all exercises. You should have at least 3 .enc files."
+        exit 1
+
+# Shell container - Debian with OpenSSL
+shell:
+  image:
+    repository: aydev/learning-shell
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  command: ["sleep"]
+  args: ["infinity"]
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+      add:
+        - SETGID
+        - SETUID
+    allowPrivilegeEscalation: false
+
+# Learning UI configuration
+ui:
+  image:
+    repository: aydev/learning-ui
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "50m"
+    limits:
+      memory: "128Mi"
+      cpu: "200m"
+
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    runAsUser: 1000
+    readOnlyRootFilesystem: true
+
+# Pod security context
+podSecurityContext:
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8080
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: ""
+  annotations: {}
+  tls: []
+
+# Persistence for shell workspace
+persistence:
+  enabled: true
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+  size: "1Gi"
+  mountPath: "/workspace"
+
+# RBAC configuration
+rbac:
+  create: true
+
+# Service account
+serviceAccount:
+  create: true
+  automount: false
+  annotations: {}
+  name: ""
+
+# Network policy
+networkPolicy:
+  enabled: false

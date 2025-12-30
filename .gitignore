@@ -1,0 +1,18 @@
+# Build artifacts
+learning-ui/learning-ui
+learning-ui/*.exe
+*.tgz
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.bak
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.claude/

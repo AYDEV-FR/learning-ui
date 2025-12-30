@@ -1,0 +1,16 @@
+# Patterns to ignore when building packages.
+*.tgz
+.git
+.gitignore
+.DS_Store
+*.swp
+*.bak
+*~
+.helmignore
+
+# Build artifacts
+learning-ui/learning-ui
+learning-ui/*.exe
+
+# Claude Code
+.claude/

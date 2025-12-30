@@ -1,0 +1,20 @@
+{{- if .Values.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "learning-ui.fullname" . }}
+  labels:
+    {{- include "learning-ui.labels" . | nindent 4 }}
+rules:
+  # Allow kubectl exec into the shell pod (for terminal WebSocket and check scripts)
+  - apiGroups: [""]
+    resources: ["pods"]
+    resourceNames:
+      - {{ include "learning-ui.shell.podName" . | quote }}
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    resourceNames:
+      - {{ include "learning-ui.shell.podName" . | quote }}
+    verbs: ["create"]
+{{- end }}

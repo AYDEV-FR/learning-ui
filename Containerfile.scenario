@@ -1,0 +1,41 @@
+# Scenario Shell Container
+# This is the sandbox environment where users execute commands
+# Customize this for each scenario's requirements
+
+FROM debian:bookworm
+
+ARG TARGETARCH
+
+# Install essential tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    wget \
+    vim \
+    nano \
+    less \
+    tree \
+    jq \
+    bash-completion \
+    ca-certificates \
+    openssh-client \
+    openssl \
+    xxd \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configure git defaults
+RUN git config --system init.defaultBranch main && \
+    git config --system advice.detachedHead false
+
+# Create workspace
+RUN mkdir -p /workspace && \
+    chmod 777 /workspace
+
+WORKDIR /workspace
+
+# Setup bash profile
+RUN echo 'export PS1="\[\e[32m\]\u@learning\[\e[0m\]:\[\e[34m\]\w\[\e[0m\]\$ "' >> /etc/bash.bashrc && \
+    echo 'source /etc/bash_completion 2>/dev/null || true' >> /etc/bash.bashrc
+
+# Default command
+CMD ["sleep", "infinity"]

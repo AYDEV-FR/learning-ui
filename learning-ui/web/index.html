@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Environment</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xterm-addon-web-links.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Panel: Instructions -->
+        <div class="panel instructions-panel">
+            <div class="panel-header">
+                <div class="scenario-info">
+                    <h1 id="scenario-title">Loading...</h1>
+                    <p id="scenario-description"></p>
+                </div>
+                <div class="step-indicator">
+                    <span id="current-step">1</span> / <span id="total-steps">?</span>
+                </div>
+            </div>
+
+            <div class="panel-content" id="instructions-content">
+                <div class="loading">Loading scenario...</div>
+            </div>
+
+            <div class="panel-footer">
+                <div class="step-navigation">
+                    <button id="btn-prev" class="btn btn-secondary" disabled>
+                        <span class="arrow">&#8592;</span> Previous
+                    </button>
+                    <button id="btn-check" class="btn btn-primary" style="display: none;">
+                        Check
+                    </button>
+                    <button id="btn-next" class="btn btn-secondary" disabled>
+                        Next <span class="arrow">&#8594;</span>
+                    </button>
+                </div>
+                <div id="check-result" class="check-result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Resize Handle -->
+        <div class="resize-handle" id="resize-handle"></div>
+
+        <!-- Right Panel: Terminal -->
+        <div class="panel terminal-panel">
+            <div class="panel-header terminal-header">
+                <div class="terminal-tabs" id="terminal-tabs">
+                    <!-- Tabs will be dynamically created -->
+                    <button class="btn-add-tab" id="btn-add-tab" title="New terminal (Ctrl+Shift+T)">+</button>
+                </div>
+            </div>
+            <div class="terminals-wrapper" id="terminals-wrapper">
+                <!-- Terminal containers will be dynamically created -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress overlay -->
+    <div id="progress-overlay" class="progress-overlay" style="display: none;">
+        <div class="progress-content">
+            <div class="spinner"></div>
+            <p>Checking...</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

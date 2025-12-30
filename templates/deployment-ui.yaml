@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "learning-ui.fullname" . }}-ui
+  labels:
+    {{- include "learning-ui.labels" . | nindent 4 }}
+    {{- include "learning-ui.ui.selectorLabels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "learning-ui.ui.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "learning-ui.ui.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "learning-ui.serviceAccountName" . }}
+      automountServiceAccountToken: true
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: ui
+          image: "{{ .Values.ui.image.repository }}:{{ .Values.ui.image.tag }}"
+          imagePullPolicy: {{ .Values.ui.image.pullPolicy }}
+          env:
+            - name: PORT
+              value: "8080"
+            - name: SCENARIO_PATH
+              value: "/scenarios"
+            - name: SHELL_POD_NAME
+              value: {{ include "learning-ui.shell.podName" . | quote }}
+            - name: SHELL_SERVICE
+              value: "{{ include "learning-ui.fullname" . }}-shell"
+            - name: NAMESPACE
+              value: {{ .Release.Namespace | quote }}
+            - name: EDITOR_ENABLED
+              value: {{ .Values.editor.enabled | quote }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          {{- with .Values.ui.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.ui.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: scenario
+              mountPath: /scenarios
+              readOnly: true
+      volumes:
+        - name: scenario
+          configMap:
+            name: {{ include "learning-ui.fullname" . }}-scenario

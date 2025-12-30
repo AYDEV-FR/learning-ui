@@ -1,0 +1,34 @@
+Learning Environment Deployed!
+==============================
+
+{{- if .Values.ingress.enabled }}
+Access your learning environment at:
+  https://{{ .Values.ingressHost }}/
+{{- else }}
+To access your learning environment, run:
+  kubectl port-forward svc/{{ include "learning-ui.fullname" . }} 8080:{{ .Values.service.port }} -n {{ .Release.Namespace }}
+
+Then open http://localhost:8080 in your browser.
+{{- end }}
+
+Components:
+-----------
+  - Learning UI: Serves instructions, terminal (xterm.js), and check API
+  - Shell: Your sandbox environment
+{{- if .Values.editor.enabled }}
+  - Editor: VS Code in browser (code-server) at /editor/
+{{- end }}
+{{- if .Values.k3s.enabled }}
+  - K3S: Embedded Kubernetes cluster
+{{- end }}
+
+Tips:
+-----
+  - Navigate between steps using Previous/Next buttons or arrow keys
+  - Click "Check" to verify your progress on each step
+  - Use Ctrl+Enter to quickly run a check
+  - Resize the panels by dragging the divider
+  - Click "+" to open additional terminal tabs
+{{- if .Values.editor.enabled }}
+  - Switch to Editor tab for VS Code experience
+{{- end }}

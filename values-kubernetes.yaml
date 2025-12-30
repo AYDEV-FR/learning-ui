@@ -1,0 +1,653 @@
+# Learning UI Chart Values - Kubernetes Basics
+# Interactive Kubernetes learning with embedded k3s cluster
+
+# Values injected by dploy API
+username: ""
+uuid: ""
+ingressHost: ""
+
+# Scenario configuration
+scenario:
+  name: "Kubernetes Basics"
+  description: "Learn Kubernetes fundamentals with a real cluster"
+  difficulty: beginner
+  estimatedTime: 45m
+  steps:
+    - name: "01-introduction"
+      title: "Introduction"
+      content: |
+        # Welcome to Kubernetes Basics
+
+        In this tutorial, you'll learn the fundamentals of Kubernetes using a **real cluster** running right here in your environment.
+
+        ## What is Kubernetes?
+
+        Kubernetes (K8s) is an open-source container orchestration platform that automates:
+        - **Deployment** of containerized applications
+        - **Scaling** based on demand
+        - **Management** of container lifecycles
+
+        ## What You'll Learn
+
+        1. Explore cluster components
+        2. Create and manage Pods
+        3. Work with Deployments
+        4. Expose applications with Services
+        5. Use ConfigMaps and Secrets
+
+        ## Verify Your Environment
+
+        Let's check that kubectl is configured and the cluster is ready:
+
+        ```bash
+        kubectl cluster-info
+        ```
+
+        Check the nodes:
+
+        ```bash
+        kubectl get nodes
+        ```
+
+    - name: "02-exploring-cluster"
+      title: "Exploring the Cluster"
+      content: |
+        # Exploring the Cluster
+
+        ## Namespaces
+
+        Namespaces provide isolation for resources. List them:
+
+        ```bash
+        kubectl get namespaces
+        ```
+
+        ## System Pods
+
+        Kubernetes runs system components as pods in the `kube-system` namespace:
+
+        ```bash
+        kubectl get pods -n kube-system
+        ```
+
+        ## API Resources
+
+        See all available resource types:
+
+        ```bash
+        kubectl api-resources | head -20
+        ```
+
+        ## Cluster Information
+
+        Get detailed cluster info:
+
+        ```bash
+        kubectl cluster-info dump | head -50
+        ```
+
+      check: |
+        #!/bin/bash
+        if kubectl get nodes 2>/dev/null | grep -q "Ready"; then
+            echo "Cluster is healthy and ready!"
+            exit 0
+        else
+            echo "Cluster not ready. Wait a moment and try again."
+            exit 1
+        fi
+
+    - name: "03-pods"
+      title: "Working with Pods"
+      content: |
+        # Working with Pods
+
+        A **Pod** is the smallest deployable unit in Kubernetes - one or more containers that share storage and network.
+
+        ## Create Your First Pod
+
+        Create a simple nginx pod:
+
+        ```bash
+        kubectl run my-nginx --image=nginx:alpine
+        ```
+
+        ## Check Pod Status
+
+        ```bash
+        kubectl get pods
+        ```
+
+        Wait until STATUS is `Running`:
+
+        ```bash
+        kubectl get pods -w
+        ```
+
+        (Press Ctrl+C to stop watching)
+
+        ## Pod Details
+
+        Get detailed information:
+
+        ```bash
+        kubectl describe pod my-nginx
+        ```
+
+        ## Pod Logs
+
+        View container logs:
+
+        ```bash
+        kubectl logs my-nginx
+        ```
+
+        ## Execute Commands in Pod
+
+        Run a command inside the pod:
+
+        ```bash
+        kubectl exec my-nginx -- nginx -v
+        ```
+
+        Interactive shell:
+
+        ```bash
+        kubectl exec -it my-nginx -- /bin/sh
+        ```
+
+        Type `exit` to leave the shell.
+
+      check: |
+        #!/bin/bash
+        if kubectl get pod my-nginx 2>/dev/null | grep -q "Running"; then
+            echo "Pod my-nginx is running!"
+            exit 0
+        else
+            echo "Create the pod with: kubectl run my-nginx --image=nginx:alpine"
+            exit 1
+        fi
+
+    - name: "04-pod-yaml"
+      title: "Pod YAML Manifests"
+      content: |
+        # Pod YAML Manifests
+
+        Instead of imperative commands, use declarative YAML files.
+
+        ## Generate YAML
+
+        Generate a pod manifest without creating it:
+
+        ```bash
+        kubectl run web --image=nginx:alpine --dry-run=client -o yaml > /workspace/pod.yaml
+        ```
+
+        View the manifest:
+
+        ```bash
+        cat /workspace/pod.yaml
+        ```
+
+        ## Create a Custom Pod
+
+        Create a pod manifest:
+
+        ```bash
+        cat <<EOF > /workspace/custom-pod.yaml
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: custom-web
+          labels:
+            app: web
+            tier: frontend
+        spec:
+          containers:
+          - name: nginx
+            image: nginx:alpine
+            ports:
+            - containerPort: 80
+            resources:
+              requests:
+                memory: "64Mi"
+                cpu: "100m"
+              limits:
+                memory: "128Mi"
+                cpu: "200m"
+        EOF
+        ```
+
+        Apply the manifest:
+
+        ```bash
+        kubectl apply -f /workspace/custom-pod.yaml
+        ```
+
+        ## Verify
+
+        ```bash
+        kubectl get pods -l app=web
+        ```
+
+      check: |
+        #!/bin/bash
+        if kubectl get pod custom-web 2>/dev/null | grep -q "Running"; then
+            echo "Custom pod created successfully!"
+            exit 0
+        else
+            echo "Apply the custom-pod.yaml manifest"
+            exit 1
+        fi
+
+    - name: "05-deployments"
+      title: "Deployments"
+      content: |
+        # Deployments
+
+        **Deployments** manage ReplicaSets and provide declarative updates for Pods.
+
+        ## Create a Deployment
+
+        ```bash
+        kubectl create deployment web-app --image=nginx:alpine --replicas=3
+        ```
+
+        ## Check Deployment Status
+
+        ```bash
+        kubectl get deployments
+        kubectl get replicasets
+        kubectl get pods -l app=web-app
+        ```
+
+        ## Scale the Deployment
+
+        Scale to 5 replicas:
+
+        ```bash
+        kubectl scale deployment web-app --replicas=5
+        ```
+
+        Watch the pods:
+
+        ```bash
+        kubectl get pods -l app=web-app -w
+        ```
+
+        ## Update the Deployment
+
+        Update the image:
+
+        ```bash
+        kubectl set image deployment/web-app nginx=nginx:1.25-alpine
+        ```
+
+        Check rollout status:
+
+        ```bash
+        kubectl rollout status deployment/web-app
+        ```
+
+        ## Rollback
+
+        View history:
+
+        ```bash
+        kubectl rollout history deployment/web-app
+        ```
+
+        Rollback to previous version:
+
+        ```bash
+        kubectl rollout undo deployment/web-app
+        ```
+
+      check: |
+        #!/bin/bash
+        REPLICAS=$(kubectl get deployment web-app -o jsonpath='{.spec.replicas}' 2>/dev/null)
+        if [ "$REPLICAS" -ge 3 ] 2>/dev/null; then
+            echo "Deployment web-app created with $REPLICAS replicas!"
+            exit 0
+        else
+            echo "Create deployment: kubectl create deployment web-app --image=nginx:alpine --replicas=3"
+            exit 1
+        fi
+
+    - name: "06-services"
+      title: "Services"
+      content: |
+        # Services
+
+        **Services** provide stable networking for Pods.
+
+        ## Service Types
+
+        - **ClusterIP**: Internal cluster IP (default)
+        - **NodePort**: Expose on each node's IP
+        - **LoadBalancer**: External load balancer
+
+        ## Expose the Deployment
+
+        Create a ClusterIP service:
+
+        ```bash
+        kubectl expose deployment web-app --port=80 --target-port=80
+        ```
+
+        ## Check the Service
+
+        ```bash
+        kubectl get services
+        kubectl describe service web-app
+        ```
+
+        ## Test the Service
+
+        Get the ClusterIP:
+
+        ```bash
+        kubectl get svc web-app -o jsonpath='{.spec.clusterIP}'
+        ```
+
+        Test connectivity (from within cluster):
+
+        ```bash
+        kubectl run curl --image=curlimages/curl --rm -it --restart=Never -- \
+          curl -s http://web-app
+        ```
+
+        ## DNS Resolution
+
+        Services get DNS names: `<service>.<namespace>.svc.cluster.local`
+
+        ```bash
+        kubectl run dns-test --image=busybox --rm -it --restart=Never -- \
+          nslookup web-app.default.svc.cluster.local
+        ```
+
+      check: |
+        #!/bin/bash
+        if kubectl get svc web-app 2>/dev/null | grep -q "ClusterIP"; then
+            echo "Service web-app created!"
+            exit 0
+        else
+            echo "Expose the deployment: kubectl expose deployment web-app --port=80"
+            exit 1
+        fi
+
+    - name: "07-configmaps-secrets"
+      title: "ConfigMaps & Secrets"
+      content: |
+        # ConfigMaps and Secrets
+
+        ## ConfigMaps
+
+        Store non-sensitive configuration data.
+
+        Create a ConfigMap:
+
+        ```bash
+        kubectl create configmap app-config \
+          --from-literal=APP_ENV=production \
+          --from-literal=LOG_LEVEL=info
+        ```
+
+        View it:
+
+        ```bash
+        kubectl get configmap app-config -o yaml
+        ```
+
+        ## Secrets
+
+        Store sensitive data (base64 encoded).
+
+        Create a Secret:
+
+        ```bash
+        kubectl create secret generic app-secret \
+          --from-literal=DB_PASSWORD=mysecretpassword \
+          --from-literal=API_KEY=abc123xyz
+        ```
+
+        View it:
+
+        ```bash
+        kubectl get secret app-secret -o yaml
+        ```
+
+        Decode a value:
+
+        ```bash
+        kubectl get secret app-secret -o jsonpath='{.data.DB_PASSWORD}' | base64 -d
+        ```
+
+        ## Using in Pods
+
+        Create a pod using ConfigMap and Secret:
+
+        ```bash
+        cat <<EOF | kubectl apply -f -
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: app-with-config
+        spec:
+          containers:
+          - name: app
+            image: busybox
+            command: ["sleep", "3600"]
+            env:
+            - name: APP_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: APP_ENV
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: DB_PASSWORD
+        EOF
+        ```
+
+        Verify environment variables:
+
+        ```bash
+        kubectl exec app-with-config -- env | grep -E "APP_ENV|DB_PASSWORD"
+        ```
+
+      check: |
+        #!/bin/bash
+        CM=$(kubectl get configmap app-config 2>/dev/null)
+        SECRET=$(kubectl get secret app-secret 2>/dev/null)
+        if [ -n "$CM" ] && [ -n "$SECRET" ]; then
+            echo "ConfigMap and Secret created!"
+            exit 0
+        else
+            echo "Create both ConfigMap and Secret"
+            exit 1
+        fi
+
+    - name: "08-cleanup"
+      title: "Cleanup & Summary"
+      content: |
+        # Cleanup & Summary
+
+        ## Clean Up Resources
+
+        Delete the resources we created:
+
+        ```bash
+        kubectl delete pod my-nginx custom-web app-with-config
+        kubectl delete deployment web-app
+        kubectl delete service web-app
+        kubectl delete configmap app-config
+        kubectl delete secret app-secret
+        ```
+
+        Or delete everything in default namespace:
+
+        ```bash
+        kubectl delete all --all
+        ```
+
+        ## What You Learned
+
+        1. **Cluster Basics**: namespaces, nodes, system components
+        2. **Pods**: create, inspect, logs, exec
+        3. **YAML Manifests**: declarative configuration
+        4. **Deployments**: scaling, updates, rollbacks
+        5. **Services**: networking, DNS, load balancing
+        6. **ConfigMaps & Secrets**: configuration management
+
+        ## Next Steps
+
+        - Learn about **Ingress** for HTTP routing
+        - Explore **PersistentVolumes** for storage
+        - Study **RBAC** for access control
+        - Try **Helm** for package management
+
+        ## Useful Commands Reference
+
+        ```bash
+        # Get resources
+        kubectl get pods,svc,deploy
+
+        # Describe resource
+        kubectl describe pod <name>
+
+        # Logs
+        kubectl logs <pod> -f
+
+        # Apply manifest
+        kubectl apply -f manifest.yaml
+
+        # Delete resource
+        kubectl delete -f manifest.yaml
+        ```
+
+        ## Congratulations!
+
+        You've completed the Kubernetes Basics tutorial!
+
+      check: |
+        #!/bin/bash
+        echo "Congratulations on completing the Kubernetes Basics tutorial!"
+        echo "You now have foundational knowledge of Kubernetes."
+        exit 0
+
+# Shell container with kubectl, helm, k9s
+shell:
+  image:
+    repository: aydev/learning-kubernetes
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
+
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+
+# Embedded Kubernetes cluster (k3s)
+k3s:
+  enabled: true
+  image:
+    repository: rancher/k3s
+    tag: v1.29.0-k3s1
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+# Code editor (code-server)
+editor:
+  enabled: true
+  image:
+    repository: codercom/code-server
+    tag: latest
+    pullPolicy: IfNotPresent
+  password: ""
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+# Learning UI configuration
+ui:
+  image:
+    repository: aydev/learning-ui
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "50m"
+    limits:
+      memory: "128Mi"
+      cpu: "200m"
+
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    runAsUser: 1000
+    readOnlyRootFilesystem: true
+
+# Pod security context - relaxed for k3s
+podSecurityContext:
+  fsGroup: 1000
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8080
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: ""
+  annotations: {}
+  tls: []
+
+# Persistence for shell workspace
+persistence:
+  enabled: true
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+  size: "2Gi"
+  mountPath: "/workspace"
+
+# RBAC configuration
+rbac:
+  create: true
+
+# Service account
+serviceAccount:
+  create: true
+  automount: false
+  annotations: {}
+  name: ""
+
+# Network policy
+networkPolicy:
+  enabled: false

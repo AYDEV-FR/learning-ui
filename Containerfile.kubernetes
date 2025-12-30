@@ -1,0 +1,54 @@
+# Kubernetes Learning Shell
+# Shell container with kubectl, helm, and k9s for Kubernetes scenarios
+
+FROM debian:bookworm
+
+ARG TARGETARCH
+
+# Install base tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    wget \
+    ca-certificates \
+    bash-completion \
+    vim \
+    nano \
+    less \
+    jq \
+    git \
+    tree \
+    net-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install kubectl
+RUN ARCH=${TARGETARCH:-amd64} && \
+    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${ARCH}/kubectl" && \
+    chmod +x kubectl && \
+    mv kubectl /usr/local/bin/
+
+# Install helm
+RUN ARCH=${TARGETARCH:-amd64} && \
+    curl -fsSL https://get.helm.sh/helm-v3.14.0-linux-${ARCH}.tar.gz | tar xz && \
+    mv linux-${ARCH}/helm /usr/local/bin/ && \
+    rm -rf linux-${ARCH}
+
+# Install k9s
+RUN ARCH=${TARGETARCH:-amd64} && \
+    if [ "$ARCH" = "amd64" ]; then K9S_ARCH="amd64"; else K9S_ARCH="arm64"; fi && \
+    curl -fsSL "https://github.com/derailed/k9s/releases/download/v0.32.4/k9s_Linux_${K9S_ARCH}.tar.gz" | tar xz -C /usr/local/bin k9s
+
+# Create workspace
+RUN mkdir -p /workspace /root/.kube && \
+    chmod 777 /workspace
+
+WORKDIR /workspace
+
+# Setup bash profile with kubectl completion
+RUN echo 'source /etc/bash_completion 2>/dev/null || true' >> /etc/bash.bashrc && \
+    echo 'source <(kubectl completion bash)' >> /etc/bash.bashrc && \
+    echo 'source <(helm completion bash)' >> /etc/bash.bashrc && \
+    echo 'alias k=kubectl' >> /etc/bash.bashrc && \
+    echo 'complete -o default -F __start_kubectl k' >> /etc/bash.bashrc && \
+    echo 'export PS1="\[\e[32m\]\u@k8s-learning\[\e[0m\]:\[\e[34m\]\w\[\e[0m\]\$ "'  >> /etc/bash.bashrc
+
+CMD ["sleep", "infinity"]
