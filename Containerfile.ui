@@ -10,11 +10,12 @@ WORKDIR /build
 RUN apk add --no-cache git
 
 # Copy go mod files
-COPY learning-ui/go.mod learning-ui/go.sum* ./
+COPY go.mod go.sum* ./
 RUN go mod download
 
 # Copy source code
-COPY learning-ui/ ./
+COPY main.go ./
+COPY web/ ./web/
 
 # Build the binary
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o learning-ui .

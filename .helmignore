@@ -9,8 +9,11 @@
 .helmignore
 
 # Build artifacts
-learning-ui/learning-ui
-learning-ui/*.exe
+learning-ui
+*.exe
 
 # Claude Code
 .claude/
+
+# Documentation
+docs/

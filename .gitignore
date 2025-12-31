@@ -1,6 +1,6 @@
 # Build artifacts
-learning-ui/learning-ui
-learning-ui/*.exe
+learning-ui
+*.exe
 *.tgz
 
 # IDE/Editor
@@ -13,6 +13,14 @@ learning-ui/*.exe
 # OS
 .DS_Store
 Thumbs.db
+
+# Go
+vendor/
+
+# Node (for docs)
+node_modules/
+docs/.docusaurus/
+docs/build/
 
 # Claude Code
 .claude/
