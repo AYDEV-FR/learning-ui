@@ -472,7 +472,7 @@ scenario:
 # Shell container - Debian with OpenSSL
 shell:
   image:
-    repository: aydev/learning-shell
+    repository: ghcr.io/aydev-fr/learning-shell
     tag: latest
     pullPolicy: IfNotPresent
 
@@ -481,83 +481,8 @@ shell:
 
   resources:
     requests:
-      memory: "256Mi"
+      memory: "128Mi"
       cpu: "100m"
     limits:
-      memory: "512Mi"
+      memory: "256Mi"
       cpu: "500m"
-
-  securityContext:
-    capabilities:
-      drop:
-        - ALL
-      add:
-        - SETGID
-        - SETUID
-    allowPrivilegeEscalation: false
-
-# Learning UI configuration
-ui:
-  image:
-    repository: aydev/learning-ui
-    tag: latest
-    pullPolicy: IfNotPresent
-
-  resources:
-    requests:
-      memory: "64Mi"
-      cpu: "50m"
-    limits:
-      memory: "128Mi"
-      cpu: "200m"
-
-  securityContext:
-    capabilities:
-      drop:
-        - ALL
-    allowPrivilegeEscalation: false
-    runAsNonRoot: true
-    runAsUser: 1000
-    readOnlyRootFilesystem: true
-
-# Pod security context
-podSecurityContext:
-  fsGroup: 1000
-  seccompProfile:
-    type: RuntimeDefault
-
-# Service configuration
-service:
-  type: ClusterIP
-  port: 8080
-
-# Ingress configuration
-ingress:
-  enabled: true
-  className: ""
-  annotations: {}
-  tls: []
-
-# Persistence for shell workspace
-persistence:
-  enabled: true
-  storageClass: ""
-  accessModes:
-    - ReadWriteOnce
-  size: "1Gi"
-  mountPath: "/workspace"
-
-# RBAC configuration
-rbac:
-  create: true
-
-# Service account
-serviceAccount:
-  create: true
-  automount: false
-  annotations: {}
-  name: ""
-
-# Network policy
-networkPolicy:
-  enabled: false

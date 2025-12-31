@@ -1,0 +1,814 @@
+# Learning UI Chart Values - Git Basics
+# Learn version control fundamentals with Git
+
+# Values injected by dploy API
+username: ""
+uuid: ""
+ingressHost: ""
+
+# Scenario configuration
+scenario:
+  name: "Git Basics"
+  description: "Learn version control fundamentals with Git"
+  difficulty: beginner
+  estimatedTime: 45m
+  steps:
+    - name: "01-introduction"
+      title: "Introduction"
+      content: |
+        # Welcome to Git Basics
+
+        **Git** is a distributed version control system that tracks changes in your code and enables collaboration.
+
+        ## What is Version Control?
+
+        Version control helps you:
+        - **Track changes** to files over time
+        - **Collaborate** with others on the same codebase
+        - **Revert** to previous versions when needed
+        - **Branch** to work on features independently
+
+        ## What You'll Learn
+
+        1. Configure Git identity
+        2. Create and clone repositories
+        3. Stage, commit, and view history
+        4. Work with branches
+        5. Merge and resolve conflicts
+        6. Work with remote repositories
+
+        Let's verify Git is installed:
+
+        ```bash
+        git --version
+        ```
+
+        View Git help:
+
+        ```bash
+        git help -a | head -20
+        ```
+
+    - name: "02-configuration"
+      title: "Configuration"
+      content: |
+        # Configuring Git
+
+        Git needs to know who you are for commit attribution.
+
+        ## Set Your Identity
+
+        Configure your name and email:
+
+        ```bash
+        git config --global user.name "Your Name"
+        git config --global user.email "you@example.com"
+        ```
+
+        ## View Configuration
+
+        ```bash
+        git config --list
+        ```
+
+        View a specific setting:
+
+        ```bash
+        git config user.name
+        git config user.email
+        ```
+
+        ## Configuration Levels
+
+        - `--system`: All users on the system
+        - `--global`: All repositories for current user
+        - `--local`: Current repository only (default)
+
+        ## Useful Settings
+
+        Set default branch name:
+
+        ```bash
+        git config --global init.defaultBranch main
+        ```
+
+        Enable colored output:
+
+        ```bash
+        git config --global color.ui auto
+        ```
+
+        Set default editor:
+
+        ```bash
+        git config --global core.editor "vim"
+        ```
+
+      check: |
+        #!/bin/bash
+        NAME=$(git config user.name 2>/dev/null)
+        EMAIL=$(git config user.email 2>/dev/null)
+        if [ -n "$NAME" ] && [ -n "$EMAIL" ]; then
+            echo "Git configured: $NAME <$EMAIL>"
+            exit 0
+        else
+            echo "Configure git with: git config --global user.name 'Your Name'"
+            exit 1
+        fi
+
+    - name: "03-create-repository"
+      title: "Creating a Repository"
+      content: |
+        # Creating a Git Repository
+
+        ## Initialize a New Repository
+
+        Create a project directory and initialize Git:
+
+        ```bash
+        cd /workspace
+        mkdir my-project
+        cd my-project
+        git init
+        ```
+
+        ## Explore the .git Directory
+
+        Git stores everything in the `.git` folder:
+
+        ```bash
+        ls -la
+        ls .git/
+        ```
+
+        Key contents:
+        - `HEAD`: Points to current branch
+        - `config`: Repository configuration
+        - `objects/`: Stores all data (commits, files)
+        - `refs/`: Branch and tag references
+
+        ## Check Repository Status
+
+        ```bash
+        git status
+        ```
+
+        This shows:
+        - Current branch
+        - Staged changes
+        - Unstaged changes
+        - Untracked files
+
+      check: |
+        #!/bin/bash
+        if [ -d "/workspace/my-project/.git" ]; then
+            echo "Repository initialized!"
+            exit 0
+        else
+            echo "Create repo: mkdir /workspace/my-project && cd /workspace/my-project && git init"
+            exit 1
+        fi
+
+    - name: "04-staging-committing"
+      title: "Staging & Committing"
+      content: |
+        # Staging and Committing Changes
+
+        ## The Three Areas
+
+        1. **Working Directory**: Your files
+        2. **Staging Area (Index)**: Changes ready to commit
+        3. **Repository**: Committed history
+
+        ## Create Files
+
+        ```bash
+        cd /workspace/my-project
+        echo "# My Project" > README.md
+        echo "console.log('Hello');" > app.js
+        ```
+
+        ## Check Status
+
+        ```bash
+        git status
+        ```
+
+        Files are "untracked" until added.
+
+        ## Stage Files
+
+        Add specific files:
+
+        ```bash
+        git add README.md
+        git status
+        ```
+
+        Add all files:
+
+        ```bash
+        git add .
+        git status
+        ```
+
+        ## Unstage Files
+
+        Remove from staging:
+
+        ```bash
+        git restore --staged app.js
+        git status
+        git add app.js
+        ```
+
+        ## Commit Changes
+
+        Create a commit:
+
+        ```bash
+        git commit -m "Initial commit: Add README and app.js"
+        ```
+
+        View the commit:
+
+        ```bash
+        git log
+        ```
+
+      check: |
+        #!/bin/bash
+        cd /workspace/my-project 2>/dev/null || exit 1
+        COMMITS=$(git rev-list --count HEAD 2>/dev/null)
+        if [ "$COMMITS" -ge 1 ]; then
+            echo "First commit created!"
+            exit 0
+        else
+            echo "Create files and commit them"
+            exit 1
+        fi
+
+    - name: "05-viewing-history"
+      title: "Viewing History"
+      content: |
+        # Viewing Commit History
+
+        ## Add More Commits
+
+        Let's create more history:
+
+        ```bash
+        cd /workspace/my-project
+        echo "## Description" >> README.md
+        echo "This is my awesome project." >> README.md
+        git add README.md
+        git commit -m "Add description to README"
+
+        echo "function greet(name) {" >> app.js
+        echo "  return 'Hello, ' + name;" >> app.js
+        echo "}" >> app.js
+        git add app.js
+        git commit -m "Add greet function"
+        ```
+
+        ## View Commit Log
+
+        Full log:
+
+        ```bash
+        git log
+        ```
+
+        One line per commit:
+
+        ```bash
+        git log --oneline
+        ```
+
+        With graph:
+
+        ```bash
+        git log --oneline --graph --all
+        ```
+
+        ## View Specific Commit
+
+        Show commit details:
+
+        ```bash
+        git show HEAD
+        ```
+
+        ## View Differences
+
+        See what changed in working directory:
+
+        ```bash
+        echo "// New comment" >> app.js
+        git diff
+        ```
+
+        See staged changes:
+
+        ```bash
+        git add app.js
+        git diff --staged
+        ```
+
+        Commit the change:
+
+        ```bash
+        git commit -m "Add comment to app.js"
+        ```
+
+      check: |
+        #!/bin/bash
+        cd /workspace/my-project 2>/dev/null || exit 1
+        COMMITS=$(git rev-list --count HEAD 2>/dev/null)
+        if [ "$COMMITS" -ge 3 ]; then
+            echo "Good! You have $COMMITS commits."
+            exit 0
+        else
+            echo "Create at least 3 commits"
+            exit 1
+        fi
+
+    - name: "06-branches"
+      title: "Working with Branches"
+      content: |
+        # Git Branches
+
+        Branches let you work on features independently.
+
+        ## View Branches
+
+        ```bash
+        cd /workspace/my-project
+        git branch
+        ```
+
+        The `*` marks the current branch.
+
+        ## Create a Branch
+
+        ```bash
+        git branch feature-login
+        git branch
+        ```
+
+        ## Switch Branches
+
+        ```bash
+        git checkout feature-login
+        git branch
+        ```
+
+        Or create and switch in one command:
+
+        ```bash
+        git checkout -b feature-signup
+        git branch
+        ```
+
+        ## Make Changes on Branch
+
+        ```bash
+        echo "// Signup functionality" > signup.js
+        git add signup.js
+        git commit -m "Add signup.js"
+        git log --oneline --all
+        ```
+
+        ## Switch Back to Main
+
+        ```bash
+        git checkout main
+        ls
+        ```
+
+        Note: `signup.js` doesn't exist on `main`!
+
+        ## Delete a Branch
+
+        ```bash
+        git branch -d feature-login
+        git branch
+        ```
+
+      check: |
+        #!/bin/bash
+        cd /workspace/my-project 2>/dev/null || exit 1
+        BRANCHES=$(git branch | wc -l)
+        if [ "$BRANCHES" -ge 2 ]; then
+            echo "You have $BRANCHES branches!"
+            exit 0
+        else
+            echo "Create at least one additional branch"
+            exit 1
+        fi
+
+    - name: "07-merging"
+      title: "Merging Branches"
+      content: |
+        # Merging Branches
+
+        Merge brings changes from one branch into another.
+
+        ## Fast-Forward Merge
+
+        When there are no diverging commits:
+
+        ```bash
+        cd /workspace/my-project
+        git checkout main
+        git merge feature-signup
+        ```
+
+        Check the result:
+
+        ```bash
+        ls
+        git log --oneline --graph --all
+        ```
+
+        ## Create a Merge Scenario
+
+        Let's create branches that diverge:
+
+        ```bash
+        git checkout -b feature-api
+        echo "// API endpoints" > api.js
+        git add api.js
+        git commit -m "Add API module"
+
+        git checkout main
+        echo "// Utilities" > utils.js
+        git add utils.js
+        git commit -m "Add utilities"
+        ```
+
+        ## View Diverged Branches
+
+        ```bash
+        git log --oneline --graph --all
+        ```
+
+        ## Merge with Commit
+
+        ```bash
+        git merge feature-api -m "Merge feature-api into main"
+        git log --oneline --graph --all
+        ```
+
+        ## Clean Up
+
+        Delete merged branch:
+
+        ```bash
+        git branch -d feature-api
+        git branch -d feature-signup
+        git branch
+        ```
+
+      check: |
+        #!/bin/bash
+        cd /workspace/my-project 2>/dev/null || exit 1
+        if [ -f "api.js" ] && [ -f "utils.js" ]; then
+            echo "Branches merged successfully!"
+            exit 0
+        else
+            echo "Complete the merge exercise"
+            exit 1
+        fi
+
+    - name: "08-conflicts"
+      title: "Resolving Conflicts"
+      content: |
+        # Merge Conflicts
+
+        Conflicts occur when the same lines are modified differently.
+
+        ## Create a Conflict
+
+        ```bash
+        cd /workspace/my-project
+
+        # Modify on main
+        echo "VERSION = '1.0'" > config.js
+        git add config.js
+        git commit -m "Add config with version 1.0"
+
+        # Create branch and modify
+        git checkout -b feature-version
+        echo "VERSION = '2.0'" > config.js
+        git add config.js
+        git commit -m "Update to version 2.0"
+
+        # Modify on main differently
+        git checkout main
+        echo "VERSION = '1.5'" > config.js
+        git add config.js
+        git commit -m "Update to version 1.5"
+        ```
+
+        ## Attempt Merge
+
+        ```bash
+        git merge feature-version
+        ```
+
+        Git reports a conflict!
+
+        ## View Conflict
+
+        ```bash
+        git status
+        cat config.js
+        ```
+
+        Conflict markers:
+        - `<<<<<<< HEAD`: Your current branch
+        - `=======`: Separator
+        - `>>>>>>> feature-version`: Incoming branch
+
+        ## Resolve Conflict
+
+        Edit the file to resolve:
+
+        ```bash
+        echo "VERSION = '2.0'" > config.js
+        cat config.js
+        ```
+
+        ## Complete the Merge
+
+        ```bash
+        git add config.js
+        git commit -m "Merge feature-version: resolve version conflict"
+        git log --oneline --graph --all
+        ```
+
+      check: |
+        #!/bin/bash
+        cd /workspace/my-project 2>/dev/null || exit 1
+        if ! git status | grep -q "You have unmerged paths"; then
+            if [ -f "config.js" ]; then
+                echo "Conflict resolved!"
+                exit 0
+            fi
+        fi
+        echo "Resolve the merge conflict in config.js"
+        exit 1
+
+    - name: "09-undoing"
+      title: "Undoing Changes"
+      content: |
+        # Undoing Changes
+
+        ## Discard Working Directory Changes
+
+        Make a change and discard it:
+
+        ```bash
+        cd /workspace/my-project
+        echo "BROKEN" >> config.js
+        cat config.js
+        git restore config.js
+        cat config.js
+        ```
+
+        ## Unstage Changes
+
+        ```bash
+        echo "// Debug" >> app.js
+        git add app.js
+        git status
+        git restore --staged app.js
+        git status
+        git restore app.js
+        ```
+
+        ## Amend Last Commit
+
+        Fix the last commit message or add files:
+
+        ```bash
+        echo "// License: MIT" > LICENSE
+        git add LICENSE
+        git commit -m "Add lisence"
+
+        # Oops! Typo. Let's fix:
+        git commit --amend -m "Add license"
+        git log --oneline -3
+        ```
+
+        ## Revert a Commit
+
+        Create a new commit that undoes changes:
+
+        ```bash
+        echo "BAD CODE" > bad.js
+        git add bad.js
+        git commit -m "Add bad code"
+
+        git revert HEAD --no-edit
+        git log --oneline -3
+        ls bad.js 2>/dev/null || echo "bad.js is gone!"
+        ```
+
+        ## Reset (Use with Caution!)
+
+        Reset to previous commit:
+
+        ```bash
+        git log --oneline -5
+        ```
+
+        Soft reset (keeps changes staged):
+        ```bash
+        # git reset --soft HEAD~1
+        ```
+
+        Hard reset (discards everything):
+        ```bash
+        # git reset --hard HEAD~1
+        ```
+
+        **Warning**: Hard reset is destructive!
+
+      check: |
+        #!/bin/bash
+        cd /workspace/my-project 2>/dev/null || exit 1
+        if [ -f "LICENSE" ] && [ ! -f "bad.js" ]; then
+            echo "Undo operations completed!"
+            exit 0
+        else
+            echo "Complete the undo exercises"
+            exit 1
+        fi
+
+    - name: "10-remote"
+      title: "Remote Repositories"
+      content: |
+        # Working with Remotes
+
+        Remote repositories enable collaboration.
+
+        ## Simulate a Remote
+
+        Create a "bare" repository to act as remote:
+
+        ```bash
+        cd /workspace
+        git init --bare remote-repo.git
+        ls remote-repo.git/
+        ```
+
+        ## Add Remote to Project
+
+        ```bash
+        cd /workspace/my-project
+        git remote add origin /workspace/remote-repo.git
+        git remote -v
+        ```
+
+        ## Push to Remote
+
+        ```bash
+        git push -u origin main
+        ```
+
+        ## View Remote Branches
+
+        ```bash
+        git branch -a
+        ```
+
+        ## Clone a Repository
+
+        ```bash
+        cd /workspace
+        git clone remote-repo.git cloned-project
+        cd cloned-project
+        ls
+        git log --oneline
+        ```
+
+        ## Make Changes in Clone
+
+        ```bash
+        echo "// From clone" >> app.js
+        git add app.js
+        git commit -m "Update from clone"
+        git push
+        ```
+
+        ## Pull Changes
+
+        ```bash
+        cd /workspace/my-project
+        git pull
+        cat app.js
+        ```
+
+      check: |
+        #!/bin/bash
+        if [ -d "/workspace/cloned-project/.git" ]; then
+            cd /workspace/my-project
+            if git remote | grep -q "origin"; then
+                echo "Remote workflow complete!"
+                exit 0
+            fi
+        fi
+        echo "Complete the remote repository exercises"
+        exit 1
+
+    - name: "11-summary"
+      title: "Summary"
+      content: |
+        # Congratulations!
+
+        You've learned Git fundamentals!
+
+        ## Commands Reference
+
+        | Category | Commands |
+        |----------|----------|
+        | Setup | `git config`, `git init`, `git clone` |
+        | Changes | `git add`, `git commit`, `git diff` |
+        | History | `git log`, `git show`, `git blame` |
+        | Branches | `git branch`, `git checkout`, `git merge` |
+        | Remote | `git remote`, `git push`, `git pull`, `git fetch` |
+        | Undo | `git restore`, `git revert`, `git reset` |
+
+        ## Common Workflows
+
+        ### Daily Work
+        ```bash
+        git pull                    # Get latest
+        git checkout -b feature     # New branch
+        # ... make changes ...
+        git add .
+        git commit -m "message"
+        git push -u origin feature
+        ```
+
+        ### Feature Branch
+        ```bash
+        git checkout main
+        git pull
+        git checkout -b feature-name
+        # ... work ...
+        git push -u origin feature-name
+        # Create pull request
+        ```
+
+        ## Next Steps
+
+        - Learn `git stash` for temporary storage
+        - Explore `git rebase` for cleaner history
+        - Practice with GitHub/GitLab workflows
+        - Learn about Git hooks
+
+        ## Cleanup (Optional)
+
+        ```bash
+        cd /workspace
+        rm -rf my-project remote-repo.git cloned-project
+        ls
+        ```
+
+        **Keep practicing!** Git mastery comes with daily use.
+
+      check: |
+        #!/bin/bash
+        echo "Congratulations on completing the Git Basics tutorial!"
+        echo "You now have a solid foundation in version control!"
+        exit 0
+
+# Shell container configuration
+shell:
+  image:
+    repository: ghcr.io/aydev-fr/learning-shell
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  command: ["sleep"]
+  args: ["infinity"]
+
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
+
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+      add:
+        - SETGID
+        - SETUID
+    allowPrivilegeEscalation: false

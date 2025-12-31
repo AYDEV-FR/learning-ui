@@ -7,256 +7,533 @@ uuid: ""
 ingressHost: ""
 
 # Scenario configuration
-# Define your tutorial steps directly in values
 scenario:
-  name: "Kubernetes Basics"
-  description: "Learn essential Kubernetes commands and concepts"
+  name: "Linux Shell Basics"
+  description: "Learn essential Linux command line skills"
   difficulty: beginner
   estimatedTime: 30m
   steps:
     - name: "01-introduction"
       title: "Introduction"
       content: |
-        # Welcome to Kubernetes Basics
+        # Welcome to Linux Shell Basics
 
-        Kubernetes (K8s) is an open-source container orchestration platform that automates deployment, scaling, and management of containerized applications.
+        The command line is a powerful tool for interacting with your computer. In this tutorial, you'll learn essential commands for navigating and managing files.
 
         ## What You'll Learn
 
-        1. Explore a Kubernetes cluster
-        2. Deploy your first Pod
-        3. Work with Deployments
-        4. Expose applications with Services
-        5. Use ConfigMaps and Secrets
+        1. Navigate the filesystem
+        2. Create and manage files and directories
+        3. View and manipulate file contents
+        4. Use pipes and redirection
+        5. Search for files and text
 
-        Let's start by checking your cluster:
+        Let's start by checking where we are:
 
         ```bash
-        kubectl cluster-info
-        kubectl get nodes
+        pwd
         ```
 
-    - name: "02-explore-cluster"
-      title: "Explore Cluster"
+        This shows your **P**resent **W**orking **D**irectory.
+
+    - name: "02-navigation"
+      title: "Navigation"
       content: |
-        # Exploring the Cluster
+        # Navigating the Filesystem
 
-        Let's explore what's running in the cluster:
+        ## Listing Files
 
-        ```bash
-        # List all namespaces
-        kubectl get namespaces
-
-        # List pods in all namespaces
-        kubectl get pods -A
-
-        # Get detailed node information
-        kubectl describe node
-        ```
-
-        Check the cluster version:
+        Use `ls` to list files in the current directory:
 
         ```bash
-        kubectl version --short
+        ls
         ```
+
+        Add flags for more details:
+
+        ```bash
+        ls -la
+        ```
+
+        - `-l` shows detailed (long) format
+        - `-a` shows hidden files (starting with `.`)
+
+        ## Changing Directories
+
+        Use `cd` to change directory:
+
+        ```bash
+        cd /tmp
+        pwd
+        ```
+
+        Go back to your workspace:
+
+        ```bash
+        cd /workspace
+        pwd
+        ```
+
+        Special shortcuts:
+        - `cd ~` or `cd` - Go to home directory
+        - `cd ..` - Go up one level
+        - `cd -` - Go to previous directory
+
       check: |
         #!/bin/bash
-        if kubectl get nodes 2>/dev/null | grep -q "Ready"; then
-            echo "Cluster is accessible!"
+        if [ "$(pwd)" = "/workspace" ]; then
+            echo "You're in the workspace directory!"
             exit 0
         else
-            echo "Cannot connect to cluster. Check your kubeconfig."
+            echo "Navigate back to /workspace with: cd /workspace"
             exit 1
         fi
 
-    - name: "03-first-pod"
-      title: "First Pod"
+    - name: "03-files-directories"
+      title: "Files & Directories"
       content: |
-        # Deploy Your First Pod
+        # Creating Files and Directories
 
-        Create a simple nginx pod:
+        ## Create a Directory
 
-        ```bash
-        kubectl run my-nginx --image=nginx:alpine
-        ```
-
-        Watch the pod come up:
+        Use `mkdir` to create directories:
 
         ```bash
-        kubectl get pods -w
+        mkdir my-project
+        ls
         ```
 
-        (Press Ctrl+C to exit watch mode)
-
-        Get more details:
+        Create nested directories with `-p`:
 
         ```bash
-        kubectl describe pod my-nginx
-        kubectl logs my-nginx
+        mkdir -p my-project/src/utils
+        ls -R my-project
         ```
+
+        ## Create Files
+
+        Use `touch` to create empty files:
+
+        ```bash
+        touch my-project/README.md
+        ls my-project
+        ```
+
+        Or create a file with content using `echo`:
+
+        ```bash
+        echo "# My Project" > my-project/README.md
+        ```
+
+        ## View Directory Structure
+
+        Use `tree` if available, or `ls -R`:
+
+        ```bash
+        ls -R my-project
+        ```
+
       check: |
         #!/bin/bash
-        if kubectl get pod my-nginx 2>/dev/null | grep -q "Running"; then
-            echo "Pod my-nginx is running!"
+        if [ -d "/workspace/my-project" ] && [ -f "/workspace/my-project/README.md" ]; then
+            echo "Directory and file created successfully!"
             exit 0
         else
-            echo "Create the pod: kubectl run my-nginx --image=nginx:alpine"
+            echo "Create the directory and file: mkdir my-project && touch my-project/README.md"
             exit 1
         fi
 
-    - name: "04-deployments"
-      title: "Deployments"
+    - name: "04-file-content"
+      title: "File Content"
       content: |
-        # Working with Deployments
+        # Viewing and Editing Files
 
-        Deployments manage ReplicaSets and provide declarative updates.
+        ## View File Contents
 
-        Create a deployment:
-
-        ```bash
-        kubectl create deployment web --image=nginx:alpine --replicas=3
-        ```
-
-        Watch the rollout:
+        Use `cat` to display entire file:
 
         ```bash
-        kubectl rollout status deployment/web
-        kubectl get pods -l app=web
+        cat my-project/README.md
         ```
 
-        Scale the deployment:
+        For longer files, use `less` (press `q` to quit):
 
         ```bash
-        kubectl scale deployment web --replicas=5
-        kubectl get pods -l app=web
+        less /etc/passwd
         ```
+
+        View first/last lines with `head` and `tail`:
+
+        ```bash
+        head -5 /etc/passwd
+        tail -5 /etc/passwd
+        ```
+
+        ## Writing to Files
+
+        Overwrite a file with `>`:
+
+        ```bash
+        echo "# My Awesome Project" > my-project/README.md
+        echo "This is a demo project." >> my-project/README.md
+        ```
+
+        Append to a file with `>>`:
+
+        ```bash
+        echo "" >> my-project/README.md
+        echo "## Features" >> my-project/README.md
+        echo "- Feature 1" >> my-project/README.md
+        echo "- Feature 2" >> my-project/README.md
+        ```
+
+        View the result:
+
+        ```bash
+        cat my-project/README.md
+        ```
+
       check: |
         #!/bin/bash
-        replicas=$(kubectl get deployment web -o jsonpath='{.spec.replicas}' 2>/dev/null)
-        if [ "$replicas" -ge 3 ] 2>/dev/null; then
-            echo "Deployment 'web' created with $replicas replicas!"
+        if grep -q "Features" /workspace/my-project/README.md 2>/dev/null; then
+            echo "README.md has been updated with features!"
             exit 0
         else
-            echo "Create deployment: kubectl create deployment web --image=nginx:alpine --replicas=3"
+            echo "Add Features section to README.md"
             exit 1
         fi
 
-    - name: "05-services"
-      title: "Services"
+    - name: "05-copy-move-delete"
+      title: "Copy, Move & Delete"
       content: |
-        # Exposing with Services
+        # Managing Files
 
-        Services provide stable networking for Pods.
+        ## Copy Files and Directories
 
-        Expose the deployment:
-
-        ```bash
-        kubectl expose deployment web --port=80 --type=ClusterIP
-        ```
-
-        Check the service:
+        Copy a file:
 
         ```bash
-        kubectl get svc web
-        kubectl describe svc web
+        cp my-project/README.md my-project/README.backup
+        ls my-project
         ```
 
-        Test connectivity:
+        Copy a directory (use `-r` for recursive):
 
         ```bash
-        kubectl run curl --rm -it --restart=Never --image=curlimages/curl -- curl -s http://web
+        cp -r my-project my-project-backup
+        ls
         ```
+
+        ## Move and Rename
+
+        Move or rename with `mv`:
+
+        ```bash
+        mv my-project/README.backup my-project/README.old
+        ls my-project
+        ```
+
+        ## Delete Files and Directories
+
+        Remove a file:
+
+        ```bash
+        rm my-project/README.old
+        ls my-project
+        ```
+
+        Remove a directory (use `-r` for recursive):
+
+        ```bash
+        rm -r my-project-backup
+        ls
+        ```
+
+        > ⚠️ **Warning**: `rm` is permanent! There's no trash can.
+
       check: |
         #!/bin/bash
-        if kubectl get svc web 2>/dev/null | grep -q "ClusterIP"; then
-            echo "Service 'web' created!"
+        if [ ! -d "/workspace/my-project-backup" ] && [ -d "/workspace/my-project" ]; then
+            echo "Backup removed, project intact!"
             exit 0
         else
-            echo "Expose deployment: kubectl expose deployment web --port=80"
+            echo "Remove the backup: rm -r my-project-backup"
             exit 1
         fi
 
-    - name: "06-configmaps"
-      title: "ConfigMaps"
+    - name: "06-pipes-redirection"
+      title: "Pipes & Redirection"
       content: |
-        # ConfigMaps and Configuration
+        # Pipes and Redirection
 
-        ConfigMaps store non-confidential configuration data.
+        ## Pipes
 
-        Create a ConfigMap:
-
-        ```bash
-        kubectl create configmap app-config \
-          --from-literal=APP_ENV=production \
-          --from-literal=APP_DEBUG=false
-        ```
-
-        View the ConfigMap:
+        Pipes (`|`) send output from one command to another:
 
         ```bash
-        kubectl get configmap app-config -o yaml
+        ls -la /etc | head -10
         ```
 
-        Use it in a pod:
+        Chain multiple commands:
 
         ```bash
-        kubectl run config-test --rm -it --restart=Never \
-          --image=busybox \
-          --env-file=<(kubectl get configmap app-config -o json | jq -r '.data | to_entries[] | "\(.key)=\(.value)"') \
-          -- env | grep APP
+        cat /etc/passwd | grep "root" | cut -d: -f1
         ```
+
+        ## Counting
+
+        Count lines, words, and characters with `wc`:
+
+        ```bash
+        cat /etc/passwd | wc -l
+        ```
+
+        ## Sorting and Uniqueness
+
+        Sort output:
+
+        ```bash
+        ls /etc | sort | head -10
+        ```
+
+        Get unique values:
+
+        ```bash
+        echo -e "apple\nbanana\napple\norange" | sort | uniq
+        ```
+
+        ## Save Output to File
+
+        ```bash
+        ls /etc | sort > /workspace/etc-files.txt
+        head /workspace/etc-files.txt
+        ```
+
       check: |
         #!/bin/bash
-        if kubectl get configmap app-config 2>/dev/null | grep -q "app-config"; then
-            echo "ConfigMap 'app-config' created!"
+        if [ -f "/workspace/etc-files.txt" ]; then
+            echo "Output saved to file successfully!"
             exit 0
         else
-            echo "Create ConfigMap: kubectl create configmap app-config --from-literal=APP_ENV=production"
+            echo "Save sorted /etc listing: ls /etc | sort > /workspace/etc-files.txt"
             exit 1
         fi
 
-    - name: "07-cleanup"
-      title: "Cleanup"
+    - name: "07-searching"
+      title: "Searching"
       content: |
-        # Cleanup Resources
+        # Finding Files and Text
 
-        Let's clean up all the resources we created:
+        ## Search File Contents with grep
 
-        ```bash
-        kubectl delete pod my-nginx
-        kubectl delete deployment web
-        kubectl delete svc web
-        kubectl delete configmap app-config
-        ```
-
-        Verify cleanup:
+        Search for a pattern in a file:
 
         ```bash
-        kubectl get all
+        grep "root" /etc/passwd
         ```
 
-        ## Congratulations!
+        Search recursively in directories:
 
-        You've learned the Kubernetes basics:
-        - ✅ Cluster exploration
-        - ✅ Running Pods
-        - ✅ Managing Deployments
-        - ✅ Exposing Services
-        - ✅ Using ConfigMaps
+        ```bash
+        grep -r "Feature" my-project/
+        ```
 
-        Keep practicing and explore more Kubernetes features!
+        Case-insensitive search:
+
+        ```bash
+        grep -i "readme" my-project/
+        ```
+
+        ## Find Files
+
+        Find files by name:
+
+        ```bash
+        find /workspace -name "*.md"
+        ```
+
+        Find files by type:
+
+        ```bash
+        find /workspace -type f -name "*.txt"
+        ```
+
+        Find and execute a command:
+
+        ```bash
+        find /workspace -name "*.md" -exec cat {} \;
+        ```
+
+        ## Which and Type
+
+        Find where a command is located:
+
+        ```bash
+        which ls
+        type cd
+        ```
+
       check: |
         #!/bin/bash
-        echo "Tutorial complete! Great job learning Kubernetes basics!"
+        echo "Great job learning to search!"
         exit 0
 
-# Scenario shell container configuration
-# This is the sandbox where users execute commands
+    - name: "08-permissions"
+      title: "Permissions"
+      content: |
+        # File Permissions
+
+        ## Understanding Permissions
+
+        View permissions with `ls -l`:
+
+        ```bash
+        ls -l my-project/
+        ```
+
+        Permissions format: `rwxrwxrwx`
+        - First 3: Owner (user)
+        - Middle 3: Group
+        - Last 3: Others
+
+        Where: `r`=read, `w`=write, `x`=execute
+
+        ## Changing Permissions
+
+        Use `chmod` to change permissions:
+
+        ```bash
+        # Make a script executable
+        echo '#!/bin/bash' > my-project/hello.sh
+        echo 'echo "Hello World!"' >> my-project/hello.sh
+        chmod +x my-project/hello.sh
+        ls -l my-project/hello.sh
+        ```
+
+        Run the script:
+
+        ```bash
+        ./my-project/hello.sh
+        ```
+
+        Numeric permissions (e.g., 755 = rwxr-xr-x):
+
+        ```bash
+        chmod 644 my-project/README.md
+        ls -l my-project/README.md
+        ```
+
+      check: |
+        #!/bin/bash
+        if [ -x "/workspace/my-project/hello.sh" ]; then
+            echo "Script is executable!"
+            exit 0
+        else
+            echo "Make the script executable: chmod +x my-project/hello.sh"
+            exit 1
+        fi
+
+    - name: "09-environment"
+      title: "Environment"
+      content: |
+        # Environment Variables
+
+        ## View Environment Variables
+
+        See all environment variables:
+
+        ```bash
+        env | head -20
+        ```
+
+        View a specific variable:
+
+        ```bash
+        echo $HOME
+        echo $PATH
+        echo $USER
+        ```
+
+        ## Set Variables
+
+        Set a variable for current session:
+
+        ```bash
+        MY_VAR="Hello World"
+        echo $MY_VAR
+        ```
+
+        Export for child processes:
+
+        ```bash
+        export MY_NAME="Linux Learner"
+        echo $MY_NAME
+        ```
+
+        ## Using Variables in Commands
+
+        ```bash
+        BACKUP_DIR="/workspace/backups"
+        mkdir -p $BACKUP_DIR
+        cp my-project/README.md $BACKUP_DIR/
+        ls $BACKUP_DIR
+        ```
+
+      check: |
+        #!/bin/bash
+        if [ -f "/workspace/backups/README.md" ]; then
+            echo "Backup created using variables!"
+            exit 0
+        else
+            echo "Create backup directory and copy file there"
+            exit 1
+        fi
+
+    - name: "10-summary"
+      title: "Summary"
+      content: |
+        # Congratulations! 🎉
+
+        You've learned the Linux shell basics:
+
+        ## Commands Covered
+
+        | Category | Commands |
+        |----------|----------|
+        | Navigation | `pwd`, `ls`, `cd` |
+        | Files | `touch`, `mkdir`, `cp`, `mv`, `rm` |
+        | Viewing | `cat`, `head`, `tail`, `less` |
+        | Pipes | `\|`, `>`, `>>`, `wc`, `sort`, `uniq` |
+        | Search | `grep`, `find`, `which` |
+        | Permissions | `chmod`, `ls -l` |
+        | Environment | `env`, `echo`, `export` |
+
+        ## Cleanup (Optional)
+
+        ```bash
+        rm -rf my-project backups etc-files.txt
+        ls
+        ```
+
+        ## Next Steps
+
+        - Learn about `vim` or `nano` for text editing
+        - Explore shell scripting with bash
+        - Try the Git Basics tutorial
+        - Practice with Kubernetes commands
+
+        **Keep practicing!** The more you use the command line, the more natural it becomes.
+
+      check: |
+        #!/bin/bash
+        echo "Congratulations on completing Linux Shell Basics!"
+        echo "You're now ready to explore more advanced topics!"
+        exit 0
+
+# Shell container configuration
 shell:
   image:
-    # Custom image built from Containerfile.kubernetes (kubectl, helm, k9s)
-    # For other scenarios, use debian:bookworm or a custom image
-    repository: aydev/learning-kubernetes
+    repository: ghcr.io/aydev-fr/learning-shell
     tag: latest
     pullPolicy: IfNotPresent
 
@@ -265,10 +542,10 @@ shell:
 
   resources:
     requests:
-      memory: "256Mi"
+      memory: "128Mi"
       cpu: "100m"
     limits:
-      memory: "512Mi"
+      memory: "256Mi"
       cpu: "500m"
 
   securityContext:
@@ -278,14 +555,12 @@ shell:
       add:
         - SETGID
         - SETUID
-        - NET_RAW
     allowPrivilegeEscalation: false
 
 # Learning UI configuration
-# Serves the split-pane web interface and check API
 ui:
   image:
-    repository: aydev/learning-ui
+    repository: ghcr.io/aydev-fr/learning-ui
     tag: latest
     pullPolicy: IfNotPresent
 
@@ -294,8 +569,8 @@ ui:
       memory: "64Mi"
       cpu: "50m"
     limits:
-      memory: "512Mi"
-      cpu: "1000m"
+      memory: "256Mi"
+      cpu: "500m"
 
   securityContext:
     capabilities:
@@ -348,9 +623,6 @@ serviceAccount:
 networkPolicy:
   enabled: false
 
-# Optional IDE/Desktop tabs
-# These appear before terminal tabs in the UI
-
 # Editor tab (code-server)
 editor:
   enabled: false
@@ -358,7 +630,7 @@ editor:
     repository: codercom/code-server
     tag: latest
     pullPolicy: IfNotPresent
-  password: ""  # Leave empty for no password
+  password: ""
   resources:
     requests:
       memory: "256Mi"
@@ -367,7 +639,7 @@ editor:
       memory: "1Gi"
       cpu: "1000m"
 
-# Embedded Kubernetes (k3s) - runs as sidecar in shell pod
+# Embedded Kubernetes (k3s)
 k3s:
   enabled: false
   image:
@@ -384,18 +656,7 @@ k3s:
 
 # Terminal tab configuration
 terminal:
-  enabled: true  # Set to false to hide the terminal tab
+  enabled: true
 
-# Custom tabs (appear after editor/desktop, before terminal)
-# Each tab requires: id, name, icon, url
-# Icons: terminal, code, desktop, book, chart, globe, database, settings
+# Custom tabs
 customTabs: []
-  # Example:
-  # - id: "jupyter"
-  #   name: "Jupyter"
-  #   icon: "book"
-  #   url: "/jupyter/"
-  # - id: "grafana"
-  #   name: "Grafana"
-  #   icon: "chart"
-  #   url: "/grafana/"

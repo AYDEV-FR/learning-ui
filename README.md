@@ -30,10 +30,13 @@ helm install my-learning ./chart
 helm install my-learning ./chart --set editor.enabled=true
 
 # With embedded K3S cluster (for Kubernetes tutorials)
-helm install my-learning ./chart -f chart/values-kubernetes.yaml
+helm install my-learning ./chart -f chart/kubernetes01.values.yaml
 
-# Using a custom scenario file
-helm install my-learning ./chart -f chart/values-openssl-aes.yaml
+# Git basics tutorial
+helm install my-learning ./chart -f chart/git.values.yaml
+
+# OpenSSL/AES cryptography tutorial
+helm install my-learning ./chart -f chart/openssl.values.yaml
 ```
 
 ### Access the UI
@@ -65,9 +68,10 @@ learning-ui/
 ├── chart/                # Helm chart
 │   ├── Chart.yaml
 │   ├── templates/
-│   ├── values.yaml
-│   ├── values-kubernetes.yaml
-│   └── values-openssl-aes.yaml
+│   ├── values.yaml          # Linux Shell Basics (default)
+│   ├── kubernetes01.values.yaml
+│   ├── git.values.yaml
+│   └── openssl.values.yaml
 ├── docs/                 # Docusaurus documentation
 ├── web/                  # Frontend (HTML/CSS/JS)
 ├── main.go               # Go server

@@ -540,7 +540,7 @@ scenario:
 # Shell container with kubectl, helm, k9s
 shell:
   image:
-    repository: aydev/learning-kubernetes
+    repository: ghcr.io/aydev-fr/learning-kubernetes
     tag: latest
     pullPolicy: IfNotPresent
 
@@ -562,92 +562,21 @@ k3s:
   enabled: true
   image:
     repository: rancher/k3s
-    tag: v1.29.0-k3s1
+    tag: v1.31.3-k3s1
     pullPolicy: IfNotPresent
   resources:
     requests:
       memory: "512Mi"
       cpu: "500m"
     limits:
-      memory: "1Gi"
-      cpu: "1000m"
+      memory: "2Gi"
+      cpu: "2000m"
 
 # Code editor (code-server)
 editor:
   enabled: true
-  image:
-    repository: codercom/code-server
-    tag: latest
-    pullPolicy: IfNotPresent
-  password: ""
-  resources:
-    requests:
-      memory: "256Mi"
-      cpu: "100m"
-    limits:
-      memory: "1Gi"
-      cpu: "1000m"
-
-# Learning UI configuration
-ui:
-  image:
-    repository: aydev/learning-ui
-    tag: latest
-    pullPolicy: IfNotPresent
-
-  resources:
-    requests:
-      memory: "64Mi"
-      cpu: "50m"
-    limits:
-      memory: "128Mi"
-      cpu: "200m"
-
-  securityContext:
-    capabilities:
-      drop:
-        - ALL
-    allowPrivilegeEscalation: false
-    runAsNonRoot: true
-    runAsUser: 1000
-    readOnlyRootFilesystem: true
-
-# Pod security context - relaxed for k3s
-podSecurityContext:
-  fsGroup: 1000
-
-# Service configuration
-service:
-  type: ClusterIP
-  port: 8080
-
-# Ingress configuration
-ingress:
-  enabled: true
-  className: ""
-  annotations: {}
-  tls: []
 
 # Persistence for shell workspace
 persistence:
   enabled: true
-  storageClass: ""
-  accessModes:
-    - ReadWriteOnce
   size: "2Gi"
-  mountPath: "/workspace"
-
-# RBAC configuration
-rbac:
-  create: true
-
-# Service account
-serviceAccount:
-  create: true
-  automount: false
-  annotations: {}
-  name: ""
-
-# Network policy
-networkPolicy:
-  enabled: false
