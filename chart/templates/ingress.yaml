@@ -46,10 +46,10 @@ metadata:
   name: {{ $fullName }}-editor
   labels:
     {{- include "learning-ui.labels" . | nindent 4 }}
+  {{- if and .Values.editor.ingress .Values.editor.ingress.annotations }}
   annotations:
-    {{- with .Values.editor.ingress.annotations }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
+    {{- toYaml .Values.editor.ingress.annotations | nindent 4 }}
+  {{- end }}
 spec:
   {{- if .Values.ingress.className }}
   ingressClassName: {{ .Values.ingress.className }}
