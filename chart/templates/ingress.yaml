@@ -39,7 +39,7 @@ spec:
                   number: {{ $svcPort }}
 {{- if .Values.editor.enabled }}
 ---
-# Separate ingress for editor with path rewrite
+# Separate ingress for editor
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -47,10 +47,7 @@ metadata:
   labels:
     {{- include "learning-ui.labels" . | nindent 4 }}
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
-    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
-    nginx.ingress.kubernetes.io/proxy-set-headers: "upgrade,$http_upgrade"
-    {{- with .Values.ingress.annotations }}
+    {{- with .Values.editor.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
@@ -71,8 +68,8 @@ spec:
     - host: {{ .Values.ingressHost | quote }}
       http:
         paths:
-          - path: /editor(/|$)(.*)
-            pathType: ImplementationSpecific
+          - path: /editor
+            pathType: Prefix
             backend:
               service:
                 name: {{ $fullName }}-shell
