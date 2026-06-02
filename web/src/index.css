@@ -27,6 +27,10 @@ html, body {
     overflow: hidden;
 }
 
+#root {
+    height: 100%;
+}
+
 .container {
     display: flex;
     height: 100vh;
@@ -211,6 +215,11 @@ html, body {
     font-style: italic;
 }
 
+.error-message h2 {
+    color: var(--accent-error);
+    margin-bottom: 0.5rem;
+}
+
 /* Panel Footer */
 .panel-footer {
     padding: 1rem 1.25rem;
@@ -285,6 +294,7 @@ html, body {
     padding: 0.75rem 1rem;
     border-radius: 6px;
     font-size: 0.9rem;
+    white-space: pre-wrap;
 }
 
 .check-result.success {

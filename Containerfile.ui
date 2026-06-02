@@ -1,8 +1,23 @@
 # Learning UI Container
 # Generic web interface - scenarios are mounted via ConfigMap
 
-# Build stage
-FROM golang:1.22-alpine AS builder
+# Frontend build stage (Vite + React via Bun).
+# Runs on the build host's native arch ($BUILDPLATFORM); output is static, arch-independent.
+FROM --platform=$BUILDPLATFORM oven/bun:1 AS frontend
+
+WORKDIR /web
+
+# Install deps first for better layer caching
+COPY web/package.json web/bun.lockb* ./
+RUN bun install --frozen-lockfile
+
+# Build the static assets into /web/dist
+COPY web/ ./
+RUN bun run build
+
+# Go build stage. Runs natively on $BUILDPLATFORM and cross-compiles to the
+# target arch via Go's GOOS/GOARCH — avoids slow/unstable QEMU emulation of Go.
+FROM --platform=$BUILDPLATFORM golang:1.22-alpine AS builder
 
 WORKDIR /build
 
@@ -13,12 +28,15 @@ RUN apk add --no-cache git
 COPY go.mod go.sum* ./
 RUN go mod download
 
-# Copy source code
+# Copy source code and the built frontend (embedded via //go:embed all:web/dist)
 COPY main.go ./
-COPY web/ ./web/
+COPY --from=frontend /web/dist ./web/dist
 
-# Build the binary
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o learning-ui .
+# Build the binary for the target platform (set by buildx)
+ARG TARGETOS
+ARG TARGETARCH
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} \
+    go build -ldflags="-w -s" -o learning-ui .
 
 # Runtime stage
 FROM alpine:3.19

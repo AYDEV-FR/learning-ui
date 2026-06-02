@@ -22,7 +22,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-//go:embed web/*
+// The frontend is a Vite/React app; its production build (web/dist) is embedded
+// here at compile time. Run `cd web && bun run build` before `go build`.
+//
+//go:embed all:web/dist
 var webFS embed.FS
 
 // Scenario represents the scenario metadata
@@ -155,10 +158,10 @@ func main() {
 	// Serve static files from embedded filesystem
 	app.Use("/", filesystem.New(filesystem.Config{
 		Root:         http.FS(webFS),
-		PathPrefix:   "web",
+		PathPrefix:   "web/dist",
 		Browse:       false,
 		Index:        "index.html",
-		NotFoundFile: "web/index.html",
+		NotFoundFile: "web/dist/index.html",
 	}))
 
 	log.Printf("Starting Learning UI on port %s", port)
