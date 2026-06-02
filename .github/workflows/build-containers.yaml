@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - 'main.go'
-      - 'web/**'
+      - 'frontend/**'
       - 'go.mod'
       - 'go.sum'
       - 'Containerfile.*'

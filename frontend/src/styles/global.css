@@ -83,7 +83,7 @@ html, body {
     font-weight: 500;
 }
 
-#current-step {
+.step-indicator .current {
     color: var(--accent-primary);
 }
 
@@ -285,6 +285,7 @@ html, body {
     padding: 0.75rem 1rem;
     border-radius: 6px;
     font-size: 0.9rem;
+    white-space: pre-wrap;
 }
 
 .check-result.success {
@@ -505,6 +506,14 @@ html, body {
     align-items: center;
     height: 100%;
     color: var(--text-muted);
+}
+
+.error-message {
+    color: var(--accent-error);
+}
+
+.error-message h2 {
+    margin-bottom: 0.5rem;
 }
 
 /* Progress Overlay */

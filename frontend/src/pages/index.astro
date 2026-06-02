@@ -1,0 +1,9 @@
+---
+import Base from '../layouts/Base.astro';
+import { App } from '../components/App';
+---
+
+<Base>
+  <!-- The UI is a fully client-side SPA driven by the Go backend API. -->
+  <App client:only="preact" />
+</Base>

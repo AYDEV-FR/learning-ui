@@ -22,7 +22,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-//go:embed web/*
+//go:embed all:frontend/dist
 var webFS embed.FS
 
 // Scenario represents the scenario metadata
@@ -152,13 +152,13 @@ func main() {
 		log.Printf("Editor enabled (routed via ingress to shell pod)")
 	}
 
-	// Serve static files from embedded filesystem
+	// Serve the static frontend (built by Astro) from the embedded filesystem
 	app.Use("/", filesystem.New(filesystem.Config{
 		Root:         http.FS(webFS),
-		PathPrefix:   "web",
+		PathPrefix:   "frontend/dist",
 		Browse:       false,
 		Index:        "index.html",
-		NotFoundFile: "web/index.html",
+		NotFoundFile: "frontend/dist/index.html",
 	}))
 
 	log.Printf("Starting Learning UI on port %s", port)

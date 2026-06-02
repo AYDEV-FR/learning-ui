@@ -1,0 +1,5 @@
+# build output is committed (embedded by the Go binary); see README
+node_modules/
+.astro/
+.DS_Store
+npm-debug.log*

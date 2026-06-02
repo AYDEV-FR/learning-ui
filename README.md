@@ -73,8 +73,8 @@ learning-ui/
 │   ├── git.values.yaml
 │   └── openssl.values.yaml
 ├── docs/                 # Docusaurus documentation
-├── web/                  # Frontend (HTML/CSS/JS)
-├── main.go               # Go server
+├── frontend/             # Astro + Preact frontend (built into frontend/dist)
+├── main.go               # Go server (embeds frontend/dist)
 ├── go.mod
 ├── Containerfile.ui      # Learning UI container
 ├── Containerfile.kubernetes  # Kubernetes shell container
@@ -98,6 +98,24 @@ ghcr.io/aydev-fr/learning-shell:latest
 ```
 
 ## Development
+
+### Frontend (Astro + Preact)
+
+The UI lives in `frontend/` and is built with [Astro](https://astro.build/)
+and Preact. All dependencies (xterm, marked, highlight.js) are bundled, so the
+UI works fully offline. The Go binary embeds the production build from
+`frontend/dist`, which is committed so `go build` works without Node.
+
+```bash
+cd frontend
+npm install
+npm run dev      # dev server with live reload (proxies /api and /ws to :8080)
+npm run build    # production build into frontend/dist
+```
+
+When running `npm run dev`, start the Go server separately on port 8080 (or set
+`BACKEND_URL`) so the API and terminal websocket are available. After changing
+the UI, run `npm run build` and commit the regenerated `frontend/dist`.
 
 ### Building Container Images
 
