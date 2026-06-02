@@ -2,7 +2,7 @@ apiVersion: v2
 name: learning-ui
 description: Interactive learning environment with step-by-step instructions and web terminal
 type: application
-version: 1.0.0
+version: 1.1.0
 appVersion: "0.1.0"
 kubeVersion: ">=1.19.0-0"
 keywords:

@@ -599,6 +599,19 @@ ingress:
   annotations: {}
   tls: []
 
+# Gateway API HTTPRoute — alternative to Ingress for clusters using the
+# Gateway API (Cilium agentgateway, envoy-gateway, istio, …). Coexists with
+# ingress.enabled but typically you'd pick one. Hostnames default to
+# [ingressHost] (the dploy-injected hostname) so a single source of truth
+# covers both routing layers.
+httpRoute:
+  enabled: false
+  parentRefs: []
+  #   - name: my-gateway
+  #     namespace: gateway-system
+  hostnames: []
+  annotations: {}
+
 # Persistence for shell workspace
 persistence:
   enabled: true

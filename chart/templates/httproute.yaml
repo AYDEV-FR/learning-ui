@@ -1,0 +1,35 @@
+{{- if .Values.httpRoute.enabled -}}
+{{/*
+Gateway API HTTPRoute — alternative to the Ingress for clusters running the
+Gateway API (Cilium agentgateway, envoy-gateway, istio, …). Hostnames default
+to [ingressHost] so the dploy-injected hostname is reused; override via
+httpRoute.hostnames when needed.
+*/}}
+{{- $fullName := include "learning-ui.fullname" . -}}
+{{- $svcPort := .Values.service.port -}}
+{{- $hostnames := .Values.httpRoute.hostnames -}}
+{{- if not $hostnames -}}{{- $hostnames = list .Values.ingressHost -}}{{- end -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "learning-ui.labels" . | nindent 4 }}
+  {{- with .Values.httpRoute.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  parentRefs:
+    {{- toYaml .Values.httpRoute.parentRefs | nindent 4 }}
+  hostnames:
+    {{- toYaml $hostnames | nindent 4 }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: {{ $fullName }}
+          port: {{ $svcPort }}
+{{- end }}
