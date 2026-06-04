@@ -1,8 +1,7 @@
 ---
-sidebar_position: 1
+title: "Terminal"
 ---
 
-# Terminal
 
 The terminal is the core feature of Learning UI, providing an interactive shell environment for hands-on learning.
 

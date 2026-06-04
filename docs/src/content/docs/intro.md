@@ -1,12 +1,11 @@
 ---
-sidebar_position: 1
+title: "Introduction"
 ---
 
-# Introduction
 
 **Learning UI** is an interactive learning environment with step-by-step instructions and a web terminal. It's a self-hosted alternative to KillerKoda/Katacoda for hands-on tutorials.
 
-![Learning UI Screenshot](/img/screenshot.png)
+![Learning UI Screenshot](../../assets/screenshot.png)
 
 ## Features
 
@@ -82,8 +81,8 @@ kubectl port-forward svc/my-learning-learning-ui 8080:8080
 
 ## Next Steps
 
-- Learn how to [write scenarios](./scenarios)
-- Explore the [terminal feature](./features/terminal)
-- Set up [Kubernetes environments](./features/kubernetes)
-- Add a [VS Code editor](./features/editor)
-- Create [custom tabs](./features/custom-tabs)
+- Learn how to [write scenarios](../scenarios/)
+- Explore the [terminal feature](../features/terminal/)
+- Set up [Kubernetes environments](../features/kubernetes/)
+- Add a [VS Code editor](../features/editor/)
+- Create [custom tabs](../features/custom-tabs/)

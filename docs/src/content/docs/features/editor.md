@@ -1,8 +1,7 @@
 ---
-sidebar_position: 3
+title: "VS Code Editor"
 ---
 
-# VS Code Editor
 
 Learning UI can include an integrated VS Code editor (code-server) for scenarios that require file editing.
 

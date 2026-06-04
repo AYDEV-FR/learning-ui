@@ -1,8 +1,7 @@
 ---
-sidebar_position: 4
+title: "Custom Tabs"
 ---
 
-# Custom Tabs
 
 Learning UI supports adding custom tabs for additional services like Jupyter notebooks, Grafana dashboards, documentation sites, and more.
 
@@ -195,4 +194,4 @@ customTabs:
 
 ## Using as a Dependency
 
-When using Learning UI as a Helm dependency, you can add custom tabs and services in your parent chart. See [Complex Scenarios](../advanced/complex-scenarios) for details.
+When using Learning UI as a Helm dependency, you can add custom tabs and services in your parent chart. See [Complex Scenarios](../../advanced/complex-scenarios/) for details.

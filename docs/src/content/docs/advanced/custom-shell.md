@@ -1,8 +1,7 @@
 ---
-sidebar_position: 2
+title: "Custom Shell Containers"
 ---
 
-# Custom Shell Containers
 
 The shell container is where users execute commands. Customize it based on your scenario's requirements.
 

@@ -1,8 +1,7 @@
 ---
-sidebar_position: 2
+title: "Writing Scenarios"
 ---
 
-# Writing Scenarios
 
 A scenario is defined entirely in a `values.yaml` file. Each scenario contains:
 - Metadata (name, description, difficulty)

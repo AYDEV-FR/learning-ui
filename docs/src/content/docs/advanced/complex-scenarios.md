@@ -1,8 +1,7 @@
 ---
-sidebar_position: 1
+title: "Complex Scenarios with Dependencies"
 ---
 
-# Complex Scenarios with Dependencies
 
 For complex scenarios that require additional services (databases, message queues, monitoring tools, etc.), you can use Learning UI as a Helm dependency in your own chart.
 

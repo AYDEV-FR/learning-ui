@@ -1,0 +1,39 @@
+---
+title: Learning UI
+description: Interactive learning environments with step-by-step instructions and a web terminal.
+template: splash
+hero:
+  tagline: Interactive learning environments with step-by-step instructions and a web terminal.
+  image:
+    file: ../../assets/screenshot.png
+  actions:
+    - text: Get Started
+      link: /learning-ui/intro/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/AYDEV-FR/learning-ui
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components'
+
+<CardGrid stagger>
+  <Card title="Interactive Terminal" icon="laptop">
+    Web-based terminal with multiple tabs, code execution from instructions, and
+    real-time feedback.
+  </Card>
+  <Card title="Kubernetes Ready" icon="cloud-download">
+    Optional embedded K3S cluster for Kubernetes tutorials. Practice with a real
+    cluster in your browser.
+  </Card>
+  <Card title="VS Code Editor" icon="pencil">
+    Optional code-server integration for a full IDE experience. Edit files
+    alongside your terminal.
+  </Card>
+  <Card title="Self-hosted" icon="rocket">
+    A self-hosted alternative to KillerKoda/Katacoda — deploy with Helm on your
+    own cluster.
+  </Card>
+</CardGrid>
