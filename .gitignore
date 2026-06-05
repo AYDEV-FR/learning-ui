@@ -19,8 +19,8 @@ vendor/
 
 # Node (for docs)
 node_modules/
-docs/.docusaurus/
-docs/build/
+docs/dist/
+docs/.astro/
 
 # Claude Code
 .claude/

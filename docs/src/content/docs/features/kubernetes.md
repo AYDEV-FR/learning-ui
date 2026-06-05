@@ -1,8 +1,7 @@
 ---
-sidebar_position: 2
+title: "Kubernetes Environment"
 ---
 
-# Kubernetes Environment
 
 Learning UI can include an embedded Kubernetes cluster (K3S) for Kubernetes tutorials, allowing users to practice with a real cluster.
 
